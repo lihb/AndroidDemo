@@ -225,11 +225,11 @@ static int decodeVideo(){
           frameRGBA->data,
           frameRGBA->linesize
         );
-        if(i == 200)
+        if(i == 150)
             break;
 
         // Save the frame to disk
-        if(++i<=202) {
+        if(++i<=152) {
           LOGI("decodeVideo before saveFrame()");
 //          SaveFrame(pEnv, bitmap, codecCtx->width, codecCtx->height);
            LOGI("saveFrame --begin");

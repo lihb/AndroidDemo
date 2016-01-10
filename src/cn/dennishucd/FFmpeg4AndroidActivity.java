@@ -8,6 +8,8 @@ import android.os.*;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
+import android.widget.Button;
+import android.widget.ProgressBar;
 
 import java.io.File;
 
@@ -20,13 +22,22 @@ public class FFmpeg4AndroidActivity extends Activity {
 
 	public static final int START_PLAY = 1;
 
+	private ProgressBar mProgressBar = null;
+
+	private Button btnStart = null;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
 		setContentView(R.layout.main);
 
-		FFmpegNative ffmpeg = new FFmpegNative();
+		mProgressBar = (ProgressBar) findViewById(R.id.progressbar);
+		btnStart = (Button) findViewById(R.id.button1);
+
+		mProgressBar.setVisibility(View.GONE);
+
+		final FFmpegNative ffmpeg = new FFmpegNative();
 
 		ffmpeg.naInit(PATH);
 		int[] resArr = ffmpeg.naGetVideoRes();
@@ -46,14 +57,15 @@ public class FFmpeg4AndroidActivity extends Activity {
 		}
 		Log.d(TAG, "width " + width + ",height:" + height);
 		ffmpeg.naSetup(width, height);
-		ffmpeg.naPlay();
 
-		findViewById(R.id.button1).setOnClickListener(new View.OnClickListener() {
+
+		btnStart.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-
-				setProgressBarIndeterminateVisibility(true);
-				new MyHandler().sendEmptyMessageDelayed(START_PLAY, 15000);
+				ffmpeg.naPlay();
+				btnStart.setClickable(false);
+				mProgressBar.setVisibility(View.VISIBLE);
+				new MyHandler().sendEmptyMessageDelayed(START_PLAY, 20000);
 
 
 			}
@@ -84,7 +96,7 @@ public class FFmpeg4AndroidActivity extends Activity {
 			if (msg.what == START_PLAY) {
 				Intent intent = new Intent(FFmpeg4AndroidActivity.this, PanoramicView.class);
 				startActivity(intent);
-				setProgressBarIndeterminateVisibility(false);
+				mProgressBar.setVisibility(View.GONE);
 			}
 		}
 	}

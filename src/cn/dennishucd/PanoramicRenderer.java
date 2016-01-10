@@ -223,11 +223,11 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
         mTextureID = textures[0];
         String baseName = String.format("pano%d.jpg", random.nextInt(5));
         String texPath = "";
-        if (frameNumber >= 100) {
+        if (frameNumber >= 150) {
             frameNumber = 1;
         }
         if (frameNumber < 1) {
-            frameNumber = 100;
+            frameNumber = 150;
         }
         texPath = Environment.getExternalStorageDirectory().getPath()+"/aaaaa/frame"+(frameNumber++)+".jpg";
         loadTexture(texPath);
