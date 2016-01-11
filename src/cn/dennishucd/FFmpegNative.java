@@ -4,9 +4,15 @@ import android.graphics.Bitmap;
 import android.util.Log;
 
 import java.io.*;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class FFmpegNative {
 
+	private LinkedBlockingQueue<Bitmap> bitmapQueue;
+
+	public FFmpegNative(LinkedBlockingQueue<Bitmap> bitmapQueue) {
+		this.bitmapQueue = bitmapQueue;
+	}
 
 	public native int avcodec_find_decoder(int codecID);
 
@@ -39,10 +45,10 @@ public class FFmpegNative {
 
 	public boolean offer(Bitmap bitmap) {
 //		Log.i("lihb test----- offfer()", DataManager.getInstance().bitmapQueue.toString());
-//		return DataManager.getInstance().bitmapQueue.offer(bitmap);
-		DataManager.getInstance().arrayList.add(bitmap);
-		Log.i("lihb test----- ", "offer()--called");
-		return true;
+		return bitmapQueue.offer(bitmap);
+//		DataManager.getInstance().arrayList.add(bitmap);
+//		Log.i("lihb test----- ", "offer()--called");
+//		return true;
 	}
 
 

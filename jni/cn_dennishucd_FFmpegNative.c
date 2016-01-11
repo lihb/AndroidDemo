@@ -225,18 +225,18 @@ static int decodeVideo(){
           frameRGBA->data,
           frameRGBA->linesize
         );
-        if(i == 150)
-            break;
+//        if(i == 150)
+//            break;
 
         // Save the frame to disk
-        if(++i<=152) {
+//        if(++i<=152) {
           LOGI("decodeVideo before saveFrame()");
 //          SaveFrame(pEnv, bitmap, codecCtx->width, codecCtx->height);
            LOGI("saveFrame --begin");
 
 
             //  char szFilename[200];
-            jmethodID sSaveFrameMID;
+//            jmethodID sSaveFrameMID;
             //获取Java层对应的类
             	jclass javaClass = (*threadEnv)->GetObjectClass(threadEnv,gJavaObj);
             	if( javaClass == NULL ) {
@@ -245,25 +245,29 @@ static int decodeVideo(){
             	}
 
             	//获取Java层被回调的函数
-//              jmethodID javaCallback = (*threadEnv)->GetMethodID(threadEnv,javaClass,"offer","(Landroid/graphics/Bitmap;)Z");
-              jmethodID javaCallback = (*threadEnv)->GetMethodID(threadEnv,javaClass,"saveFrameToPath","(Landroid/graphics/Bitmap;Ljava/lang/String;)V");
-              if( javaCallback == NULL) {
+              jmethodID javaCallback = (*threadEnv)->GetMethodID(threadEnv,javaClass,"offer","(Landroid/graphics/Bitmap;)Z");
+//              jmethodID javaCallback = (*threadEnv)->GetMethodID(threadEnv,javaClass,"saveFrameToPath","(Landroid/graphics/Bitmap;Ljava/lang/String;)V");
+              if(javaCallback == NULL) {
               	LOGI("Fail to find method onNativeCallback");
               	return 0;
               }
 
               //回调Java层的函数
                LOGI("call java method to save frame");
-               char szFilename[200];
+//               char szFilename[200];
 
-               sprintf(szFilename, "/sdcard/aaaaa/frame%d.jpg", i);
-               jstring filePath = (*threadEnv)->NewStringUTF(threadEnv, szFilename);
+//               sprintf(szFilename, "/sdcard/aaaaa/frame%d.jpg", i);
+//               jstring filePath = (*threadEnv)->NewStringUTF(threadEnv, szFilename);
 
-              (*threadEnv)->CallVoidMethod(threadEnv,gJavaObj,javaCallback, bitmap, filePath);
-//              (*threadEnv)->CallBooleanMethod(threadEnv,gJavaObj,javaCallback,bitmap);
+//              (*threadEnv)->CallVoidMethod(threadEnv,gJavaObj,javaCallback, bitmap, filePath);
+              (*threadEnv)->CallBooleanMethod(threadEnv,gJavaObj,javaCallback,bitmap);
                LOGI("call java method to save frame done");
-              LOGI("save frame %d", i);
-        }
+//               LOGI("save frame %d", i);
+               // 释放资源
+               (*threadEnv)->DeleteLocalRef(threadEnv, javaCallback);
+               (*threadEnv)->DeleteLocalRef(threadEnv, javaClass);
+
+//        }
       }
     }
     // Free the packet that was allocated by av_read_frame

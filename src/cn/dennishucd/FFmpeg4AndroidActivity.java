@@ -37,7 +37,7 @@ public class FFmpeg4AndroidActivity extends Activity {
 
 		mProgressBar.setVisibility(View.GONE);
 
-		final FFmpegNative ffmpeg = new FFmpegNative();
+		final FFmpegNative ffmpeg = new FFmpegNative(DataManager.getInstance().bitmapQueue);
 
 		ffmpeg.naInit(PATH);
 		int[] resArr = ffmpeg.naGetVideoRes();
@@ -65,7 +65,7 @@ public class FFmpeg4AndroidActivity extends Activity {
 				ffmpeg.naPlay();
 				btnStart.setClickable(false);
 				mProgressBar.setVisibility(View.VISIBLE);
-				new MyHandler().sendEmptyMessageDelayed(START_PLAY, 20000);
+				new MyHandler().sendEmptyMessageDelayed(START_PLAY, 0);
 
 
 			}

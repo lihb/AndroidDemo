@@ -29,13 +29,10 @@ public class PanoramicView extends Activity{
         Intent intent = getIntent();
         String texPath = intent.getStringExtra("texturePath");
 
-//        for (int i = 0; i < 5; i++) {
-//            texPath = "assets://" + String.format("pano%d.jpg", i);
-//        }
         // Create our Preview view and set it as the content of our
         // Activity
         mGLSurfaceView = new TouchGLSurfaceView(this);
-        mPanoramic = new PanoramicRenderer(texPath, this);
+        mPanoramic = new PanoramicRenderer(texPath, this, DataManager.getInstance().bitmapQueue);
 
         mGLSurfaceView.setRenderer(mPanoramic);
 //        mGLSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);

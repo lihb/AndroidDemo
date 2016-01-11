@@ -2,18 +2,17 @@ package cn.dennishucd;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.opengl.GLES10;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLU;
 import android.opengl.GLUtils;
-import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Log;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 import java.util.Random;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by IntelliJ IDEA.
@@ -49,9 +48,13 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
     float pitchSpeed;
     private int frameNumber = 1;
 
-    public PanoramicRenderer(String mTexFile, Context context) {
+    private LinkedBlockingQueue<Bitmap> bitmapQueue;
+
+    public PanoramicRenderer(String mTexFile, Context context, LinkedBlockingQueue<Bitmap> bitmapQueue) {
         this.mTexFile = mTexFile;
         m_context = context;
+        this.bitmapQueue = bitmapQueue;
+
     }
 
     @Override
@@ -79,6 +82,7 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
     public void loadTexture(String textFile) {
         Log.i("lihb test----- ", "loadTexture() called ");
         Bitmap bitmap = null;
+        bitmap = bitmapQueue.poll();
 
 //        Log.i("lihb test----- ", "loadTexture -- arrayList.size =  " +DataManager.getInstance().arrayList.size());
 //        for (int i = 0,size = DataManager.getInstance().arrayList.size(); i < size; i++) {
@@ -105,11 +109,14 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
 //                e.printStackTrace();
 //            }
 //        } else {
-            bitmap = BitmapFactory.decodeFile(textFile);
+//            bitmap = BitmapFactory.decodeFile(textFile);
 //        }
+        if (bitmap != null) {
 
-        setTexture(bitmap);
-        bitmap.recycle();
+            setTexture(bitmap);
+//            bitmap.recycle();
+        }
+
     }
 
     private void checkGlError(String op) {
@@ -140,8 +147,14 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
         mTexHeight = bitmap.getHeight();
         GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
         checkGlError("texImage2D");
+//        if (bitmap.isRecycled() == false) {
+//            bitmap.recycle();
+//            bitmap = null;
+//            System.gc();
+//        }
         mGrid = null;
         mGrid = generateSphereGrid();
+
     }
 
     public Grid generateSphereGrid() {
@@ -221,16 +234,27 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
         int[] textures = new int[1];
         gl.glGenTextures(1, textures, 0);
         mTextureID = textures[0];
-        String baseName = String.format("pano%d.jpg", random.nextInt(5));
-        String texPath = "";
-        if (frameNumber >= 150) {
-            frameNumber = 1;
+//        String baseName = String.format("pano%d.jpg", random.nextInt(5));
+//        String texPath = "";
+//        if (frameNumber >= 150) {
+//            frameNumber = 1;
+//        }
+//        if (frameNumber < 1) {
+//            frameNumber = 150;
+//        }
+//        texPath = Environment.getExternalStorageDirectory().getPath()+"/aaaaa/frame"+(frameNumber++)+".jpg";
+//        loadTexture("");
+        Bitmap bitmap = bitmapQueue.poll();
+        if (bitmap != null) {
+            setTexture(bitmap);
         }
-        if (frameNumber < 1) {
-            frameNumber = 150;
+
+        try {
+            Thread.sleep(300);
+            Log.i("lihb test", Thread.currentThread().getId() + "");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        texPath = Environment.getExternalStorageDirectory().getPath()+"/aaaaa/frame"+(frameNumber++)+".jpg";
-        loadTexture(texPath);
 
         if (mGrid == null) return;
         update();
