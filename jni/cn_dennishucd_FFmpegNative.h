@@ -7,13 +7,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*
- * Class:     cn_dennishucd_FFmpegNative
- * Method:    avcodec_find_decoder
- * Signature: (I)I
- */
-JNIEXPORT jint JNICALL Java_cn_dennishucd_FFmpegNative_avcodec_1find_1decoder
-  (JNIEnv *, jobject, jint);
 
 /*
  * Class:     cn_dennishucd_FFmpegNative
@@ -47,9 +40,9 @@ JNIEXPORT jint JNICALL Java_cn_dennishucd_FFmpegNative_naSetup
 JNIEXPORT void JNICALL Java_cn_dennishucd_FFmpegNative_naPlay
   (JNIEnv *, jobject);
 
-  jobject createBitmap(JNIEnv *pEnv, jint pWidth, jint pHeight);
-    void SaveFrame(JNIEnv *pEnv, jobject pBitmap, jint width, jint height);
-    static jint decodeVideo();
+jobject createBitmap(JNIEnv *pEnv, jint pWidth, jint pHeight);
+
+static void* decodeVideo(void *arg);
 
 #ifdef __cplusplus
 }

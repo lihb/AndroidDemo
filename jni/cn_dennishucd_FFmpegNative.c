@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <wchar.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "cn_dennishucd_FFmpegNative.h"
 
@@ -23,8 +24,8 @@
 #include <android/log.h>
 
 #define LOG_TAG "android-ffmpeg-lihb-test"
-#define LOGI(...) __android_log_print(4, LOG_TAG, __VA_ARGS__);
-#define LOGE(...) __android_log_print(6, LOG_TAG, __VA_ARGS__);
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__);
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__);
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,32 +46,6 @@ int         height;
 JavaVM      *gJavaVM;
 jobject     gJavaObj;
 
-
-/*
- * Class:     cn_dennishucd_FFmpegNative
- * Method:    avcodec_find_decoder
- * Signature: (I)I
- */
-JNIEXPORT jint JNICALL Java_cn_dennishucd_FFmpegNative_avcodec_1find_1decoder
-  (JNIEnv *env, jobject obj, jint codecID)
-{
-  AVCodec *codec = NULL;
-
-//  /* register all formats and codecs */
-//  av_register_all();
-//
-//  codec = avcodec_find_decoder(codecID);
-
-  if (codec != NULL)
-  {
-    return 0;
-  }
-  else
-  {
-    return -1;
-  }
-}
-
 /*
  * Class:     cn_dennishucd_FFmpegNative
  * Method:    naInit
@@ -84,10 +59,6 @@ jint JNICALL Java_cn_dennishucd_FFmpegNative_naInit(JNIEnv *pEnv, jobject pObj, 
     //全局化变量
     (*pEnv)->GetJavaVM(pEnv, &gJavaVM);
     gJavaObj = (*pEnv)->NewGlobalRef(pEnv,pObj);
-
-
-//    jclass temp = (*pEnv)->FindClass(pEnv, "cn/dennishucd/FFmpegNative");
-//    gFfmegNativecls = (*pEnv)->NewGlobalRef(pEnv, temp);
 
     videoFileName = (char *)(*pEnv)->GetStringUTFChars(pEnv, pFileName, NULL);
     LOGI("video file name is %s", videoFileName);
@@ -123,9 +94,9 @@ jint JNICALL Java_cn_dennishucd_FFmpegNative_naInit(JNIEnv *pEnv, jobject pObj, 
     if(avcodec_open2(codecCtx, pCodec, &optionsDict)<0)
       return -1; // Could not open codec
     // Allocate video frame
-    decodedFrame=avcodec_alloc_frame();
+    decodedFrame=av_frame_alloc();
     // Allocate an AVFrame structure
-    frameRGBA=avcodec_alloc_frame();
+    frameRGBA=av_frame_alloc();
     if(frameRGBA==NULL)
       return -1;
     return 0;
@@ -143,7 +114,7 @@ jintArray JNICALL Java_cn_dennishucd_FFmpegNative_naGetVideoRes(JNIEnv *pEnv, jo
     }
     lRes = (*pEnv)->NewIntArray(pEnv, 2);
     if (lRes == NULL) {
-      LOGI(4, "cannot allocate memory for video size");
+      LOGI("cannot allocate memory for video size.....");
       return NULL;
     }
     jint lVideoRes[2];
@@ -196,40 +167,35 @@ jint JNICALL Java_cn_dennishucd_FFmpegNative_naSetup(JNIEnv *pEnv, jobject pObj,
 
  }
 
-static int decodeVideo(){
+static void* decodeVideo(void *arg){
   AVPacket  packet;
   int       frameFinished;
   JNIEnv    *threadEnv;
-// Read frames and save first five frames to disk
  // 注册线程
   int status = (*gJavaVM)->AttachCurrentThread(gJavaVM, &threadEnv, NULL);
   LOGI("decodeVideo() --attach thread, status = %d" , status);
 
-  int i=0;
+  // Read frames and save first five frames to disk
   while(av_read_frame(formatCtx, &packet)>=0) {
-    // Is this a packet from the video stream?
-    if(packet.stream_index==videoStream) {
-      // Decode video frame
-      avcodec_decode_video2(codecCtx, decodedFrame, &frameFinished,
+//  	 	 usleep(200000); // 300000microsecond = 300millisecond
+     // Is this a packet from the video stream?
+     if(packet.stream_index==videoStream) {
+         // Decode video frame
+         avcodec_decode_video2(codecCtx, decodedFrame, &frameFinished,
          &packet);
-      // Did we get a video frame?
-      if(frameFinished) {
-        // Convert the image from its native format to RGBA
-        sws_scale
-        (
-          sws_ctx,
-          (uint8_t const * const *)decodedFrame->data,
-          decodedFrame->linesize,
-          0,
-          codecCtx->height,
-          frameRGBA->data,
-          frameRGBA->linesize
-        );
-//        if(i == 150)
-//            break;
-
-        // Save the frame to disk
-//        if(++i<=152) {
+         // Did we get a video frame?
+         if(frameFinished) {
+            // Convert the image from its native format to RGBA
+			sws_scale
+			(
+			  sws_ctx,
+			  (uint8_t const * const *)decodedFrame->data,
+			  decodedFrame->linesize,
+			  0,
+			  codecCtx->height,
+			  frameRGBA->data,
+			  frameRGBA->linesize
+			);
           LOGI("decodeVideo before saveFrame()");
 //          SaveFrame(pEnv, bitmap, codecCtx->width, codecCtx->height);
            LOGI("saveFrame --begin");
@@ -266,8 +232,6 @@ static int decodeVideo(){
                // 释放资源
                (*threadEnv)->DeleteLocalRef(threadEnv, javaCallback);
                (*threadEnv)->DeleteLocalRef(threadEnv, javaClass);
-
-//        }
       }
     }
     // Free the packet that was allocated by av_read_frame
@@ -295,7 +259,7 @@ static int decodeVideo(){
   (*threadEnv)->DeleteGlobalRef(threadEnv, gJavaObj);
     //释放当前线程
     (*gJavaVM)->DetachCurrentThread(gJavaVM);
-    LOGI("thread stopdddd... %d.", i);
+    LOGI("thread stopdddd....");
 
   return 0;
 
@@ -332,47 +296,6 @@ jobject createBitmap(JNIEnv *pEnv, jint pWidth, jint pHeight) {
   return (*pEnv)->CallStaticObjectMethod(pEnv, javaBitmapClass, mid, pWidth, pHeight, javaBitmapConfig);
 }
 
-
-
-void SaveFrame(JNIEnv *pEnv, jobject pBitmap, int width, int height) {
-//  LOGI("saveFrame --begin");
-//
-//
-////  char szFilename[200];
-//  jmethodID sSaveFrameMID;
-//  //获取Java层对应的类
-//  	jclass javaClass = (*env)->GetObjectClass(env,gJavaObj);
-//  	if( javaClass == NULL ) {
-//  		LOG("Fail to find javaClass");
-//  		return 0;
-//  	}
-//
-//  	//获取Java层被回调的函数
-//    jmethodID javaCallback = (*env)->GetMethodID(env,javaClass,"offer","(Landroid/graphics/Bitmap;)Z");
-//    if( javaCallback == NULL) {
-//    	LOG("Fail to find method onNativeCallback");
-//    	return 0;
-//    }
-//
-//    //回调Java层的函数
-//     LOGI("call java method to save frame");
-//    (*env)->CallBooleanMethod(env,gJavaObj,javaCallback,pBitmap);
-//     LOGI("call java method to save frame done");
-
-
-//  sSaveFrameMID = (*pEnv)->GetStaticMethodID(pEnv, gFfmegNativecls, "offer", "(Landroid/graphics/Bitmap;)Z");
-
-//  jstring filePath = (*pEnv)->NewStringUTF(pEnv, szFilename);
-//  (*pEnv)->CallStaticBooleanMethod(pEnv, ffmpegNative, sSaveFrameMID, pBitmap);
-
-
-//  if(sSaveFrameMID != NULL){
-//    (*pEnv)->DeleteLocalRef(pEnv, sSaveFrameMID);
-//  }
-
-
-
-}
 
 
 jint JNI_OnLoad(JavaVM* pVm, void* reserved) {

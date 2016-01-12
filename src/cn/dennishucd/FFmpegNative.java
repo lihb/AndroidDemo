@@ -14,8 +14,6 @@ public class FFmpegNative {
 		this.bitmapQueue = bitmapQueue;
 	}
 
-	public native int avcodec_find_decoder(int codecID);
-
 	public native int naInit(String pFileName);
 	public native int[] naGetVideoRes();
 	public native int naSetup(int pWidth, int pHeight);
@@ -44,7 +42,7 @@ public class FFmpegNative {
 	}
 
 	public boolean offer(Bitmap bitmap) {
-//		Log.i("lihb test----- offfer()", DataManager.getInstance().bitmapQueue.toString());
+		Log.i("lihb test----- offfer()", bitmapQueue.toString());
 		return bitmapQueue.offer(bitmap);
 //		DataManager.getInstance().arrayList.add(bitmap);
 //		Log.i("lihb test----- ", "offer()--called");

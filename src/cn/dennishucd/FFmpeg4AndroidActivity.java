@@ -4,12 +4,14 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Point;
-import android.os.*;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ProgressBar;
+import android.widget.ImageView;
 
 import java.io.File;
 
@@ -19,11 +21,6 @@ public class FFmpeg4AndroidActivity extends Activity {
 	private static final String PATH = Environment.getExternalStorageDirectory()
 			+ File.separator + "1.mp4";
 
-
-	public static final int START_PLAY = 1;
-
-	private ProgressBar mProgressBar = null;
-
 	private Button btnStart = null;
 
 	@Override
@@ -32,10 +29,7 @@ public class FFmpeg4AndroidActivity extends Activity {
 		
 		setContentView(R.layout.main);
 
-		mProgressBar = (ProgressBar) findViewById(R.id.progressbar);
 		btnStart = (Button) findViewById(R.id.button1);
-
-		mProgressBar.setVisibility(View.GONE);
 
 		final FFmpegNative ffmpeg = new FFmpegNative(DataManager.getInstance().bitmapQueue);
 
@@ -63,11 +57,8 @@ public class FFmpeg4AndroidActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				ffmpeg.naPlay();
-				btnStart.setClickable(false);
-				mProgressBar.setVisibility(View.VISIBLE);
-				new MyHandler().sendEmptyMessageDelayed(START_PLAY, 0);
-
-
+				Intent intent = new Intent(FFmpeg4AndroidActivity.this, PanoramicView.class);
+				startActivity(intent);
 			}
 		});
 
@@ -87,17 +78,5 @@ public class FFmpeg4AndroidActivity extends Activity {
 			res[1] = display.getHeight();  // deprecated
 		}
 		return res;
-	}
-
-	private class MyHandler extends Handler{
-		@Override
-		public void handleMessage(Message msg) {
-			super.handleMessage(msg);
-			if (msg.what == START_PLAY) {
-				Intent intent = new Intent(FFmpeg4AndroidActivity.this, PanoramicView.class);
-				startActivity(intent);
-				mProgressBar.setVisibility(View.GONE);
-			}
-		}
 	}
 }

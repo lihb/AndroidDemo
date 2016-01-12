@@ -11,7 +11,6 @@ import android.util.Log;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
-import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -22,9 +21,6 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Description：全景浏览渲染组件
  */
 public class PanoramicRenderer implements GLSurfaceView.Renderer {
-    Random random = new Random();
-    private String mTexFile;
-    private Context m_context;
     private GL10 _gl;
     private Grid mGrid = null;
     private int mTextureID;
@@ -46,13 +42,10 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
     private boolean isTouchDown = false;
     float yawSpeed;
     float pitchSpeed;
-    private int frameNumber = 1;
 
     private LinkedBlockingQueue<Bitmap> bitmapQueue;
 
-    public PanoramicRenderer(String mTexFile, Context context, LinkedBlockingQueue<Bitmap> bitmapQueue) {
-        this.mTexFile = mTexFile;
-        m_context = context;
+    public PanoramicRenderer(LinkedBlockingQueue<Bitmap> bitmapQueue) {
         this.bitmapQueue = bitmapQueue;
 
     }
@@ -75,48 +68,63 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
         gl.glEnable(GL10.GL_CULL_FACE);
 
         _gl = gl;
-
-
+//        mGrid = generateSphereGrid();
     }
 
-    public void loadTexture(String textFile) {
-        Log.i("lihb test----- ", "loadTexture() called ");
-        Bitmap bitmap = null;
-        bitmap = bitmapQueue.poll();
+    @Override
+    public void onSurfaceChanged(GL10 gl, int width, int height) {
+        gl.glViewport(0, 0, width, height);
+        viewAspect = (float) width / height;
+        viewHeight = height;
+        viewWidth = width;
+        setMaxViewYZAngle(maxViewYZAngle);
+        setViewYZAngle(maxViewYZAngle);
+    }
 
-//        Log.i("lihb test----- ", "loadTexture -- arrayList.size =  " +DataManager.getInstance().arrayList.size());
-//        for (int i = 0,size = DataManager.getInstance().arrayList.size(); i < size; i++) {
-//            Log.i("lihb test----- ", "loadTexture() in for loop ");
-//            bitmap = DataManager.getInstance().arrayList.get(i);
-//            if (bitmap != null) {
-//                Log.i("lihb test----- onCreate()", bitmap.toString());
-//                setTexture(bitmap);
-////                bitmap.recycle();
-//            } else {
-//                Log.i("lihb test----- onCreate()", "bitmap is null");
-//            }
-//        }
+    @Override
+    public void onDrawFrame(GL10 gl) {
+        Log.i("lihb test", "onDrawFrame called");
 
-//        if (textFile.startsWith("assets://")) {
-//            String baseName = textFile.substring("assets://".length());
-//            InputStream is = null;
-//            try {
-//                is = m_context.getResources().getAssets().open(baseName);
-//                bitmap = BitmapFactory.decodeStream(is);
-//                is.close();
-//                is = null;
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        } else {
-//            bitmap = BitmapFactory.decodeFile(textFile);
-//        }
+        int[] textures = new int[1];
+        gl.glGenTextures(1, textures, 0);
+        mTextureID = textures[0];
+
+        Bitmap bitmap = bitmapQueue.poll();
         if (bitmap != null) {
-
+            Log.i("lihb test----", "poll()-->" + bitmap.toString());
+            // 设置纹理贴图
             setTexture(bitmap);
-//            bitmap.recycle();
+        }else {
+            Log.i("lihb test----", "poll()--> bitmap = null");
         }
 
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        if (mGrid == null) return;
+
+        update();
+
+        gl.glTexEnvx(GL10.GL_TEXTURE_ENV, GL10.GL_TEXTURE_ENV_MODE,
+                GL10.GL_MODULATE);
+        gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+
+        gl.glMatrixMode(GL10.GL_MODELVIEW);
+        gl.glLoadIdentity();
+
+        gl.glRotatef(pitchAngle, 1f, 0f, 0.0f);
+        gl.glRotatef(yawAngle, 0.0f, 1f, 0.0f);
+
+        gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+        gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+
+        gl.glActiveTexture(GL10.GL_TEXTURE0);
+        gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureID);
+
+        mGrid.draw(gl);
     }
 
     private void checkGlError(String op) {
@@ -128,6 +136,7 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
 
     public void setTexture(Bitmap bitmap) {
         if (bitmap == null) return;
+        Log.i("lihb test----", "in setTecture()");
         _gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureID);
 
         _gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER,
@@ -143,21 +152,22 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
 
         _gl.glTexEnvf(GL10.GL_TEXTURE_ENV, GL10.GL_TEXTURE_ENV_MODE,
                 GL10.GL_REPLACE);
+
         mTexWidth = bitmap.getWidth();
         mTexHeight = bitmap.getHeight();
+
+
         GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
         checkGlError("texImage2D");
-//        if (bitmap.isRecycled() == false) {
-//            bitmap.recycle();
-//            bitmap = null;
-//            System.gc();
-//        }
-        mGrid = null;
+        Log.i("lihb test----", "in setTecture() after texImage2D ");
+
+//        mGrid = null;
         mGrid = generateSphereGrid();
 
     }
 
     public Grid generateSphereGrid() {
+        Log.i("lihb test----", "generateSphereGrid() begin ");
         final int vSteps = 20;
         final int uSteps = (int) (vSteps * (mTexWidth / mTexHeight));
         Grid grid = new Grid(uSteps + 1, vSteps + 1);
@@ -188,6 +198,7 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
         }
 
         grid.createBufferObjects(_gl);
+        Log.i("lihb test----", "generateSphereGrid() over");
         return grid;
     }
 
@@ -217,65 +228,7 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
         GLU.gluPerspective(_gl, viewYZAngle, viewAspect, 0.1f, 10.0f);
     }
 
-    @Override
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
-        gl.glViewport(0, 0, width, height);
-        viewAspect = (float) width / height;
-        viewHeight = height;
-        viewWidth = width;
-        setMaxViewYZAngle(maxViewYZAngle);
-        setViewYZAngle(maxViewYZAngle);
-    }
 
-    @Override
-    public void onDrawFrame(GL10 gl) {
-        Log.i("lihb test", "onDrawFrame called");
-
-        int[] textures = new int[1];
-        gl.glGenTextures(1, textures, 0);
-        mTextureID = textures[0];
-//        String baseName = String.format("pano%d.jpg", random.nextInt(5));
-//        String texPath = "";
-//        if (frameNumber >= 150) {
-//            frameNumber = 1;
-//        }
-//        if (frameNumber < 1) {
-//            frameNumber = 150;
-//        }
-//        texPath = Environment.getExternalStorageDirectory().getPath()+"/aaaaa/frame"+(frameNumber++)+".jpg";
-//        loadTexture("");
-        Bitmap bitmap = bitmapQueue.poll();
-        if (bitmap != null) {
-            setTexture(bitmap);
-        }
-
-        try {
-            Thread.sleep(300);
-            Log.i("lihb test", Thread.currentThread().getId() + "");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        if (mGrid == null) return;
-        update();
-        gl.glTexEnvx(GL10.GL_TEXTURE_ENV, GL10.GL_TEXTURE_ENV_MODE,
-                GL10.GL_MODULATE);
-        gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
-
-        gl.glMatrixMode(GL10.GL_MODELVIEW);
-        gl.glLoadIdentity();
-
-        gl.glRotatef(pitchAngle, 1f, 0f, 0.0f);
-        gl.glRotatef(yawAngle, 0.0f, 1f, 0.0f);
-
-        gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-        gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
-
-        gl.glActiveTexture(GL10.GL_TEXTURE0);
-        gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureID);
-
-        mGrid.draw(gl);
-    }
 
     long lastUpdateTime = 0;
 

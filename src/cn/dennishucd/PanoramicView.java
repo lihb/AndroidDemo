@@ -12,10 +12,7 @@ import android.view.WindowManager;
 
 /**
  * Created by IntelliJ IDEA.
- * User:  霍峰
- * Date: 11-5-3
- * Time: 上午9:50
- * Description:
+ * 将解码后的图片展示在 opengl es 画出后的 球 上
  */
 public class PanoramicView extends Activity{
 
@@ -26,13 +23,11 @@ public class PanoramicView extends Activity{
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                         WindowManager.LayoutParams.FLAG_FULLSCREEN);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        Intent intent = getIntent();
-        String texPath = intent.getStringExtra("texturePath");
 
         // Create our Preview view and set it as the content of our
         // Activity
         mGLSurfaceView = new TouchGLSurfaceView(this);
-        mPanoramic = new PanoramicRenderer(texPath, this, DataManager.getInstance().bitmapQueue);
+        mPanoramic = new PanoramicRenderer(DataManager.getInstance().bitmapQueue);
 
         mGLSurfaceView.setRenderer(mPanoramic);
 //        mGLSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
@@ -42,7 +37,7 @@ public class PanoramicView extends Activity{
 
     }
 
-    
+
     @Override
     protected void onResume() {
         // Ideally a game should implement onResume() and onPause()

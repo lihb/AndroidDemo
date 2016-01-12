@@ -10,7 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class DataManager {
 
-    public LinkedBlockingQueue<Bitmap> bitmapQueue = new LinkedBlockingQueue<Bitmap>(300);
+    public LinkedBlockingQueue<Bitmap> bitmapQueue = new LinkedBlockingQueue<Bitmap>(100);
     public ArrayList<Bitmap> arrayList = new ArrayList<Bitmap>();
 
 

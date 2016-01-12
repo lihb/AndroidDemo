@@ -3,6 +3,8 @@
  */
 package cn.dennishucd;
 
+import android.util.Log;
+
 import javax.microedition.khronos.opengles.GL;
 import javax.microedition.khronos.opengles.GL10;
 import javax.microedition.khronos.opengles.GL11;
@@ -115,6 +117,7 @@ class Grid {
     }
 
     public void createBufferObjects(GL gl) {
+        Log.i("lihb test----", "createBufferObjects() begin ");
         // Generate a the vertex and element buffer IDs
         int[] vboIds = new int[2];
         GL11 gl11 = (GL11) gl;
@@ -135,9 +138,11 @@ class Grid {
         mVertexBuffer = null;
         mVertexByteBuffer = null;
         mIndexBuffer = null;
+        Log.i("lihb test----", "createBufferObjects() over ");
     }
 
     public void draw(GL10 gl) {
+        Log.i("lihb test----", "draw() begin ");
         GL11 gl11 = (GL11) gl;
 
         gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
@@ -151,5 +156,6 @@ class Grid {
         gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
         gl11.glBindBuffer(GL11.GL_ARRAY_BUFFER, 0);
         gl11.glBindBuffer(GL11.GL_ELEMENT_ARRAY_BUFFER, 0);
+        Log.i("lihb test----", "draw() over ");
     }
 }
