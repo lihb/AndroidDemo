@@ -2,7 +2,6 @@ package cn.dennishucd;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Intent;
 import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
@@ -11,7 +10,6 @@ import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 
 import java.io.File;
 
@@ -32,6 +30,7 @@ public class FFmpeg4AndroidActivity extends Activity {
 		btnStart = (Button) findViewById(R.id.button1);
 
 		final FFmpegNative ffmpeg = new FFmpegNative(DataManager.getInstance().bitmapQueue);
+		final FFmpegAudioNative fFmpegAudioNative = new FFmpegAudioNative();
 
 		ffmpeg.naInit(PATH);
 		int[] resArr = ffmpeg.naGetVideoRes();
@@ -56,9 +55,10 @@ public class FFmpeg4AndroidActivity extends Activity {
 		btnStart.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				ffmpeg.naPlay();
-				Intent intent = new Intent(FFmpeg4AndroidActivity.this, PanoramicView.class);
-				startActivity(intent);
+				fFmpegAudioNative.audioPlayer(PATH);
+//				ffmpeg.naPlay();
+//				Intent intent = new Intent(FFmpeg4AndroidActivity.this, PanoramicView.class);
+//				startActivity(intent);
 			}
 		});
 

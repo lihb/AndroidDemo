@@ -2,7 +2,6 @@ package cn.dennishucd;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
@@ -57,7 +56,7 @@ public class PanoramicView extends Activity{
     private TouchGLSurfaceView mGLSurfaceView;
     private PanoramicRenderer mPanoramic;
 
-    static private class TouchGLSurfaceView extends GLSurfaceView{
+    private class TouchGLSurfaceView extends GLSurfaceView{
         private PanoramicRenderer mRender;
 
         public TouchGLSurfaceView(Context context) {

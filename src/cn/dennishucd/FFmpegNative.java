@@ -19,8 +19,10 @@ public class FFmpegNative {
 	public native int naSetup(int pWidth, int pHeight);
 
 	public native void naPlay();
-//	public native int naMain(FFmpegNative pObject, String pVideoFileName, int pNumOfFrames);
 
+	public native int audioPlayer(String fileName);
+	public native int audioPlayerPauseOrPlay();
+	public native int audioPlayerStop();
 
 	private void saveFrameToPath(Bitmap bitmap, String pPath) {
 		Log.i("lihb test----- ", "saveFrameToPath() called");
