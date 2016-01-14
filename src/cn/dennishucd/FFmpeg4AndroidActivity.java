@@ -6,18 +6,17 @@ import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.widget.Button;
 
-import java.io.File;
-
 public class FFmpeg4AndroidActivity extends Activity {
 
 	private static final String TAG = "FFmpeg4AndroidActivity";
-	private static final String PATH = Environment.getExternalStorageDirectory()
-			+ File.separator + "1.mp4";
+	private static final String PATH = Environment.getExternalStorageDirectory().getPath()
+			+ "/1.mp4";
+	private static final String PATH_OUT = Environment.getExternalStorageDirectory().getPath()
+			+ "/1.pcm";
 
 	private Button btnStart = null;
 
@@ -29,33 +28,33 @@ public class FFmpeg4AndroidActivity extends Activity {
 
 		btnStart = (Button) findViewById(R.id.button1);
 
-		final FFmpegNative ffmpeg = new FFmpegNative(DataManager.getInstance().bitmapQueue);
+//		final FFmpegNative ffmpeg = new FFmpegNative(DataManager.getInstance().bitmapQueue);
 		final FFmpegAudioNative fFmpegAudioNative = new FFmpegAudioNative();
 
-		ffmpeg.naInit(PATH);
-		int[] resArr = ffmpeg.naGetVideoRes();
-		Log.d(TAG, "res width " + resArr[0] + ": height " + resArr[1]);
-		int[] screenRes = getScreenRes();
-		int width, height;
-		float widthScaledRatio = screenRes[0]*1.0f/resArr[0];
-		float heightScaledRatio = screenRes[1]*1.0f/resArr[1];
-		if (widthScaledRatio > heightScaledRatio) {
-			//use heightScaledRatio
-			width = (int) (resArr[0]*heightScaledRatio);
-			height = screenRes[1];
-		} else {
-			//use widthScaledRatio
-			width = screenRes[0];
-			height = (int) (resArr[1]*widthScaledRatio);
-		}
-		Log.d(TAG, "width " + width + ",height:" + height);
-		ffmpeg.naSetup(width, height);
+//		ffmpeg.naInit(PATH);
+//		int[] resArr = ffmpeg.naGetVideoRes();
+//		Log.d(TAG, "res width " + resArr[0] + ": height " + resArr[1]);
+//		int[] screenRes = getScreenRes();
+//		int width, height;
+//		float widthScaledRatio = screenRes[0]*1.0f / resArr[0];
+//		float heightScaledRatio = screenRes[1]*1.0f / resArr[1];
+//		if (widthScaledRatio > heightScaledRatio) {
+//			//use heightScaledRatio
+//			width = (int) (resArr[0]*heightScaledRatio);
+//			height = screenRes[1];
+//		} else {
+//			//use widthScaledRatio
+//			width = screenRes[0];
+//			height = (int) (resArr[1]*widthScaledRatio);
+//		}
+//		Log.d(TAG, "width " + width + ",height:" + height);
+//		ffmpeg.naSetup(width, height);
 
 
 		btnStart.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				fFmpegAudioNative.audioPlayer(PATH);
+				fFmpegAudioNative.audioPlayer(PATH,PATH_OUT);
 //				ffmpeg.naPlay();
 //				Intent intent = new Intent(FFmpeg4AndroidActivity.this, PanoramicView.class);
 //				startActivity(intent);
