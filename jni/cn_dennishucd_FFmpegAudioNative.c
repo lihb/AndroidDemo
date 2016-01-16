@@ -365,25 +365,26 @@ jstring outputFile){
 
                       printf("index:%5d\t pts:%lld\t packet size:%d\n",index,packet->pts,packet->size);
                       //Write PCM
-                      fwrite(out_buffer, 1, out_buffer_size, pFile);
+//                      fwrite(out_buffer, 1, out_buffer_size, pFile);
                       index++;
                       if(flag_start == 0)
 						{
 							flag_start = 1;
 							createBufferQueueAudioPlayer(env, clz, pCodecCtx->sample_rate, pCodecCtx->channels, SL_PCMSAMPLEFORMAT_FIXED_16);
 						}
-						int data_size = av_samples_get_buffer_size(
-						pFrame->linesize,pCodecCtx->channels,
-						pFrame->nb_samples,pCodecCtx->sample_fmt, 1);
-						LOGI("audioDecodec  :%d : %d, :%d    :%d",data_size,pCodecCtx->channels,pFrame->nb_samples,pCodecCtx->sample_rate);
-						(*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, pFrame->data[0], data_size);
+//						int data_size = av_samples_get_buffer_size(
+//						pFrame->linesize,pCodecCtx->channels,
+//						pFrame->nb_samples,pCodecCtx->sample_fmt, 1);
+//						LOGI("audioDecodec  :%d : %d, :%d    :%d",data_size,pCodecCtx->channels,pFrame->nb_samples,pCodecCtx->sample_rate);
+//						(*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, pFrame->data[0], data_size);
 
-//						LOGI("audioDecodec  :%d : %d, :%d    :%d", out_buffer_size,pCodecCtx->channels,
-//						pFrame->nb_samples,pCodecCtx->sample_rate);
-//
-//						(*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, out_buffer, out_buffer_size);
+						LOGI("audioDecodec  :%d : %d, :%d    :%d", out_buffer_size,pCodecCtx->channels,
+						pFrame->nb_samples,pCodecCtx->sample_rate);
+
+						(*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, out_buffer, out_buffer_size);
                   }
               }
+              usleep(10000);
               av_free_packet(packet);
           }
 
