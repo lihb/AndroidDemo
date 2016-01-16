@@ -15,8 +15,6 @@ public class FFmpegAudioNative {
         System.loadLibrary("avdevice-55");
         System.loadLibrary("ffmpeg_codec");
     }
-
-    public native int audioPlayer(String fileName, String outFileName);
     public native int audioPlayerPauseOrPlay();
     public native int audioPlayerStop();
     public  native void setPlayingAudioPlayer(boolean isPlaying);
@@ -24,6 +22,8 @@ public class FFmpegAudioNative {
     public  native void setVolumeAudioPlayer(int millibel);
 
     public  native void setMutAudioPlayer(boolean mute);
+    public  native void startAudioPlayer(String fileName, String outFileName);
+
 
     public  native void shutdown();
 

@@ -11,17 +11,11 @@ extern "C" {
 
 void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context);
 
-void createEngine(JNIEnv* env, jclass clz);
+void createEngine();
 
-void createBufferQueueAudioPlayer(JNIEnv* env, jclass clz, jint rate, jint channel, jint bitsPerSample);
+void createBufferQueueAudioPlayer(jint rate, jint channel, jint bitsPerSample);
 
-/*
- * Class:     cn_dennishucd_FFmpegAudioNative
- * Method:    audioPlayer
- * Signature: (Ljava/lang/String;)I
- */
-JNIEXPORT jint JNICALL Java_cn_dennishucd_FFmpegAudioNative_audioPlayer
-  (JNIEnv *, jobject, jstring, jstring);
+static void* decodeAudio(void *arg);
 
 /*
  * Class:     cn_dennishucd_FFmpegAudioNative
@@ -62,6 +56,14 @@ JNIEXPORT void JNICALL Java_cn_dennishucd_FFmpegAudioNative_setVolumeAudioPlayer
  */
 JNIEXPORT void JNICALL Java_cn_dennishucd_FFmpegAudioNative_setMutAudioPlayer
   (JNIEnv *, jobject, jboolean);
+
+/*
+ * Class:     cn_dennishucd_FFmpegAudioNative
+ * Method:    startAudioPlayer
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_cn_dennishucd_FFmpegAudioNative_startAudioPlayer
+  (JNIEnv *, jobject, jstring, jstring);
 
 /*
  * Class:     cn_dennishucd_FFmpegAudioNative
