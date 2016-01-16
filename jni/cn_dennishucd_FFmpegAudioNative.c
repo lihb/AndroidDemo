@@ -70,7 +70,7 @@ static unsigned nextSize;
 static int nextCount;
 
 JavaVM      *gJavaVM;
-jobject     gJavaObj;
+jobject     gJavaAudioObj;
 
 jstring glocal_title;
 jstring goutput_title;
@@ -122,44 +122,6 @@ void createEngine()
     result = (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
     assert(SL_RESULT_SUCCESS == result);
 
-    // get the environmental reverb interface
-    // this could fail if the environmental reverb effect is not available,
-    // either because the feature is not present, excessive CPU load, or
-    // the required MODIFY_AUDIO_SETTINGS permission was not requested and granted
-//    result = (*outputMixObject)->GetInterface(outputMixObject, SL_IID_ENVIRONMENTALREVERB,
-//            &outputMixEnvironmentalReverb);
-//    if (SL_RESULT_SUCCESS == result) {
-//        result = (*outputMixEnvironmentalReverb)->SetEnvironmentalReverbProperties(
-//                outputMixEnvironmentalReverb, &reverbSettings);
-//    }
-    // ignore unsuccessful result codes for environmental reverb, as it is optional for this example
-
-//    SLresult result;
-//
-//    	// create engine
-//    	result = slCreateEngine(&engineObject, 0, NULL, 0, NULL, NULL);
-//    	assert(SL_RESULT_SUCCESS == result);
-//    	(void) result;
-//
-//    	// realize the engine
-//    	result = (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
-//    	assert(SL_RESULT_SUCCESS == result);
-//    	(void) result;
-//
-//    	// get the engine interface, which is needed in order to create other objects
-//    	result = (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineEngine);
-//    	assert(SL_RESULT_SUCCESS == result);
-//    	(void) result;
-//
-//    	// create output mix,
-//    	result = (*engineEngine)->CreateOutputMix(engineEngine, &outputMixObject, 0, 0, 0);
-//    	assert(SL_RESULT_SUCCESS == result);
-//    	(void) result;
-//
-//    	// realize the output mix
-//    	result = (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
-//    	assert(SL_RESULT_SUCCESS == result);
-//    	(void) result;
 }
 
 void createBufferQueueAudioPlayer(int rate, int channel,int bitsPerSample)
@@ -213,7 +175,6 @@ void createBufferQueueAudioPlayer(int rate, int channel,int bitsPerSample)
    	assert(SL_RESULT_SUCCESS == result);
    	(void) result;
 
-//   	mThread = new PlaybackThread(utf8Uri);
    	// register callback on the buffer queue
    	result = (*bqPlayerBufferQueue)->RegisterCallback(bqPlayerBufferQueue, bqPlayerCallback, NULL);
    	assert(SL_RESULT_SUCCESS == result);
@@ -233,12 +194,6 @@ void createBufferQueueAudioPlayer(int rate, int channel,int bitsPerSample)
    	result = (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_PLAYING);
    	assert(SL_RESULT_SUCCESS == result);
    	(void) result;
-   	//pthread_t id;
-
-//   	mThread->start();
-//   	env->ReleaseStringUTFChars(uri, utf8Uri);
-//   	ALOGD("createAudioPlayer finish");
-//   	return 0;
 
 }
 
@@ -252,7 +207,7 @@ JNIEXPORT void JNICALL Java_cn_dennishucd_FFmpegAudioNative_startAudioPlayer(JNI
 
    //全局化变量
      (*env)->GetJavaVM(env, &gJavaVM);
-     gJavaObj = (*env)->NewGlobalRef(env,obj);
+     gJavaAudioObj = (*env)->NewGlobalRef(env,obj);
 
      glocal_title = (*env)->NewGlobalRef(env,fileName);
      goutput_title = (*env)->NewGlobalRef(env,outputFile);
@@ -266,7 +221,7 @@ JNIEXPORT void JNICALL Java_cn_dennishucd_FFmpegAudioNative_startAudioPlayer(JNI
 
 
 static void* decodeAudio(void *arg){
-  JNIEnv    *threadEnv;
+      JNIEnv    *threadEnv;
       // 注册线程
       int status = (*gJavaVM)->AttachCurrentThread(gJavaVM, &threadEnv, NULL);
 
@@ -404,6 +359,7 @@ static void* decodeAudio(void *arg){
 //      (*threadEnv)->ReleaseStringUTFChars(threadEnv, outputFile, output_title);
       //释放当前线程
       (*gJavaVM)->DetachCurrentThread(gJavaVM);
+      pthread_exit(0);
 
 }
 

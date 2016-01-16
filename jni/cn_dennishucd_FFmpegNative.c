@@ -259,6 +259,7 @@ static void* decodeVideo(void *arg){
   (*threadEnv)->DeleteGlobalRef(threadEnv, gJavaObj);
     //释放当前线程
     (*gJavaVM)->DetachCurrentThread(gJavaVM);
+    pthread_exit(0);
     LOGI("thread stopdddd....");
 
   return 0;
