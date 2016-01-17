@@ -24,6 +24,7 @@
 // 添加opensl es支持
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
+#include <inttypes.h>
 
 #include "cn_dennishucd_FFmpegAudioNative.h"
 
@@ -62,6 +63,11 @@ static SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
 static SLEffectSendItf bqPlayerEffectSend;
 static SLMuteSoloItf bqPlayerMuteSolo;
 static SLVolumeItf bqPlayerVolume;
+
+
+// aux effect on the output mix, used by the buffer queue player
+static const SLEnvironmentalReverbSettings reverbSettings =
+    SL_I3DL2_ENVIRONMENT_PRESET_STONECORRIDOR;
 
 
 // pointer and size of the next player buffer to enqueue, and number of remaining buffers
@@ -114,13 +120,24 @@ void createEngine()
     // create output mix, with environmental reverb specified as a non-required interface
     const SLInterfaceID ids[1] = {SL_IID_ENVIRONMENTALREVERB};
     const SLboolean req[1] = {SL_BOOLEAN_FALSE};
-//    result = (*engineEngine)->CreateOutputMix(engineEngine, &outputMixObject, 1, ids, req);
-    result = (*engineEngine)->CreateOutputMix(engineEngine, &outputMixObject, 0, 0, 0);
+    result = (*engineEngine)->CreateOutputMix(engineEngine, &outputMixObject, 1, ids, req);
+//    result = (*engineEngine)->CreateOutputMix(engineEngine, &outputMixObject, 0, 0, 0);
     assert(SL_RESULT_SUCCESS == result);
 
     // realize the output mix
     result = (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
     assert(SL_RESULT_SUCCESS == result);
+
+    // get the environmental reverb interface
+    // this could fail if the environmental reverb effect is not available,
+    // either because the feature is not present, excessive CPU load, or
+    // the required MODIFY_AUDIO_SETTINGS permission was not requested and granted
+    result = (*outputMixObject)->GetInterface(outputMixObject, SL_IID_ENVIRONMENTALREVERB,
+            &outputMixEnvironmentalReverb);
+    if (SL_RESULT_SUCCESS == result) {
+        result = (*outputMixEnvironmentalReverb)->SetEnvironmentalReverbProperties(
+            outputMixEnvironmentalReverb, &reverbSettings);
+    }
 
 }
 
@@ -312,6 +329,8 @@ static void* decodeAudio(void *arg){
       au_convert_ctx = swr_alloc();
       au_convert_ctx=swr_alloc_set_opts(au_convert_ctx,out_channel_layout, AV_SAMPLE_FMT_S16, out_sample_rate,
           in_channel_layout,pCodecCtx->sample_fmt , pCodecCtx->sample_rate,0, NULL);
+        LOGI("out_channel_layout  :%"PRIu64"，in_channel_layout : %"PRIu64", sample_fmt :%d",
+            out_channel_layout,in_channel_layout,pCodecCtx->sample_fmt);
       swr_init(au_convert_ctx);
       createEngine();
       int flag_start = 0;
@@ -327,14 +346,14 @@ static void* decodeAudio(void *arg){
 
                   LOGI("index:%5d\t pts:%lld\t packet size:%d\n",index,packet->pts,packet->size);
                   //Write PCM
-//                      fwrite(out_buffer, 1, out_buffer_size, pFile);
+//                fwrite(out_buffer, 1, out_buffer_size, pFile);
                   index++;
                   if(flag_start == 0)
                     {
                         flag_start = 1;
                         createBufferQueueAudioPlayer(pCodecCtx->sample_rate, pCodecCtx->channels, SL_PCMSAMPLEFORMAT_FIXED_16);
                     }
-                    LOGI("audioDecodec  :%d : %d, :%d    :%d", out_buffer_size,pCodecCtx->channels,
+                    LOGI("audioDecodec  out_buffer_size  :%d,channels : %d,nb_samples :%d,sample_rate    :%d", out_buffer_size,pCodecCtx->channels,
                     pFrame->nb_samples,pCodecCtx->sample_rate);
 
                     (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, out_buffer, out_buffer_size);

@@ -1,6 +1,5 @@
 package cn.dennishucd;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.opengl.GLES10;
 import android.opengl.GLSurfaceView;
