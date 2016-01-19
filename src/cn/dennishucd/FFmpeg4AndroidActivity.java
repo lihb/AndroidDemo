@@ -50,7 +50,7 @@ public class FFmpeg4AndroidActivity extends Activity {
 			height = (int) (resArr[1]*widthScaledRatio);
 		}
 		Log.d(TAG, "width " + width + ",height:" + height);
-		ffmpeg.naSetup(width, height);
+		ffmpeg.naSetup(1920, 960);
 
 
 		btnStart.setOnClickListener(new View.OnClickListener() {

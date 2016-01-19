@@ -154,8 +154,8 @@ void createBufferQueueAudioPlayer(int rate, int channel,int bitsPerSample)
      format_pcm.formatType = SL_DATAFORMAT_PCM;
      format_pcm.numChannels = channel;
      format_pcm.samplesPerSec = rate * 1000;
-     format_pcm.bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16;
-     format_pcm.containerSize = SL_PCMSAMPLEFORMAT_FIXED_16;
+     format_pcm.bitsPerSample = bitsPerSample;
+     format_pcm.containerSize = bitsPerSample;
 
     if(channel == 2)
     	format_pcm.channelMask = SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT;
@@ -252,7 +252,7 @@ static void* decodeAudio(void *arg){
       int             i, audioStream;
       AVCodecContext  *pCodecCtx;
       AVCodec         *pCodec;
-      AVPacket        *packet;
+      static AVPacket packet;
       uint8_t         *out_buffer;
       AVFrame         *pFrame;
       int ret;
@@ -305,73 +305,166 @@ static void* decodeAudio(void *arg){
           LOGI("Could not open codec.\n");
       }
 
-      packet=(AVPacket *)av_malloc(sizeof(AVPacket));
-      av_init_packet(packet);
+      LOGI(" frame_size = %d\n",pCodecCtx->frame_size);
+      LOGI(" sample_fmt = %d\n",pCodecCtx->sample_fmt);
+      LOGI(" bit_rate = %d \r\n", pCodecCtx->bit_rate);
+      LOGI(" sample_rate = %d \r\n", pCodecCtx->sample_rate);
+      LOGI(" channels = %d \r\n", pCodecCtx->channels);
+      LOGI(" code_name = %s \r\n", pCodecCtx->codec->name);
+      LOGI(" block_align = %d\n",pCodecCtx->block_align);
 
-      //Out Audio Param
-      uint64_t out_channel_layout=AV_CH_LAYOUT_STEREO;
-      //nb_samples: AAC-1024 MP3-1152
-      int out_nb_samples=pCodecCtx->frame_size;
-//          AVSampleFormat out_sample_fmt=AV_SAMPLE_FMT_S16;
-      int out_sample_rate= 48000;
-      int out_channels=av_get_channel_layout_nb_channels(out_channel_layout);
-      //Out Buffer Size
-      int out_buffer_size=av_samples_get_buffer_size(NULL,out_channels ,out_nb_samples, AV_SAMPLE_FMT_S16, 1);
+      uint8_t *pktdata;
+      int countt = 0;
+      int pktsize;
+      int out_size = MAX_AUDIO_FRAME_SIZE*100;
+      uint8_t * inbuf = (uint8_t *)malloc(out_size);
+      SwrContext *swr_ctx = swr_alloc();
+      AVFrame * audioFrame = av_frame_alloc();
+      swr_ctx = swr_alloc_set_opts(NULL,
+                                   pCodecCtx->channel_layout, AV_SAMPLE_FMT_S16, pCodecCtx->sample_rate,
+                                   pCodecCtx->channel_layout, pCodecCtx->sample_fmt, pCodecCtx->sample_rate,
+                                   0, NULL);
+      ret = 0;
 
-      LOGI("out_sample_rate  :%d，channels : %d, out_buffer_size :%d", out_sample_rate,out_channels,out_buffer_size);
+      if ((ret = swr_init(swr_ctx)) < 0) {
 
-      out_buffer=(uint8_t *)av_malloc(MAX_AUDIO_FRAME_SIZE*2);
-      pFrame=av_frame_alloc();
+          LOGI("Failed to initialize the resampling context\n");
+          return;
 
-      //FIX:Some Codec's Context Information is missing
-      in_channel_layout=av_get_default_channel_layout(pCodecCtx->channels);
-      //Swr
-      au_convert_ctx = swr_alloc();
-      au_convert_ctx=swr_alloc_set_opts(au_convert_ctx,out_channel_layout, AV_SAMPLE_FMT_S16, out_sample_rate,
-          in_channel_layout,pCodecCtx->sample_fmt , pCodecCtx->sample_rate,0, NULL);
-        LOGI("out_channel_layout  :%"PRIu64"，in_channel_layout : %"PRIu64", sample_fmt :%d",
-            out_channel_layout,in_channel_layout,pCodecCtx->sample_fmt);
-      swr_init(au_convert_ctx);
-      createEngine();
-      int flag_start = 0;
-      while(av_read_frame(pFormatCtx, packet)>=0){
-          if(packet->stream_index==audioStream){
-
-              ret = avcodec_decode_audio4( pCodecCtx, pFrame, &got_picture, packet);
-              if ( ret < 0 ) {
-                  LOGI("Error in decoding audio frame.\n");
-              }
-              if ( got_picture > 0 ){
-                  swr_convert(au_convert_ctx,&out_buffer, MAX_AUDIO_FRAME_SIZE,(const uint8_t **)pFrame->data , pFrame->nb_samples);
-
-                  LOGI("index:%5d\t pts:%lld\t packet size:%d\n",index,packet->pts,packet->size);
-                  //Write PCM
-//                fwrite(out_buffer, 1, out_buffer_size, pFile);
-                  index++;
-                  if(flag_start == 0)
-                    {
-                        flag_start = 1;
-                        createBufferQueueAudioPlayer(pCodecCtx->sample_rate, pCodecCtx->channels, SL_PCMSAMPLEFORMAT_FIXED_16);
-                    }
-                    LOGI("audioDecodec  out_buffer_size  :%d,channels : %d,nb_samples :%d,sample_rate    :%d", out_buffer_size,pCodecCtx->channels,
-                    pFrame->nb_samples,pCodecCtx->sample_rate);
-
-                    (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, out_buffer, out_buffer_size);
-              }
-          }
-          usleep(11000);
-          av_free_packet(packet);
       }
 
-      swr_free(&au_convert_ctx);
 
-      fclose(pFile);
+      createEngine();
+      int flag_start = 0;
 
-      av_free(out_buffer);
-      // Close the codec
-      avcodec_close(pCodecCtx);
-      // Close the video file
+      //pFormatCtx中调用对应格式的packet获取函数
+      while (av_read_frame(pFormatCtx, &packet) >= 0) {
+          //如果是音频
+          if (packet.stream_index == audioStream) {
+              pktdata =  packet.data;
+              pktsize = packet.size;
+
+              if(flag_start == 0)
+              {
+                  flag_start = 1;
+                  createBufferQueueAudioPlayer(pCodecCtx->sample_rate, pCodecCtx->channels, SL_PCMSAMPLEFORMAT_FIXED_16);
+              }
+              while (pktsize > 0) {
+                  out_size = MAX_AUDIO_FRAME_SIZE*100;
+                  int gotframe = 1024;
+                  int len = avcodec_decode_audio4(pCodecCtx, audioFrame, &gotframe, &packet);
+                  if (len < 0)
+                  {
+                      printf("Error while decoding.\n");
+                      break;
+                  }
+                  pktsize -= len;
+                  pktdata += len;
+              }
+
+
+              int needed_buf_size = av_samples_get_buffer_size(NULL,
+                                                               pCodecCtx->channels,
+                                                               audioFrame->nb_samples,
+                                                               AV_SAMPLE_FMT_S16, 0);
+
+              int outsamples = swr_convert(swr_ctx,&inbuf,needed_buf_size,(const uint8_t**)audioFrame->extended_data,audioFrame->nb_samples);
+
+              LOGI("b is %d,a is %d",needed_buf_size,audioFrame->nb_samples);
+
+              int resampled_data_size = outsamples * pCodecCtx->channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+
+              countt++;
+              LOGI("resampled_data_size is %d",resampled_data_size);
+              LOGI("%d data is %p",countt,*audioFrame->data);
+
+              (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, inbuf, needed_buf_size);
+
+           usleep(20000);
+
+          }
+      }
+      free(inbuf);
+      if (pCodecCtx!=NULL) {
+          avcodec_close(pCodecCtx);
+      }
+      //audio_swr_resampling_audio_destory(swr_ctx);
       avformat_close_input(&pFormatCtx);
+      av_free_packet(&packet);
+
+//      packet=(AVPacket *)av_malloc(sizeof(AVPacket));
+//      av_init_packet(packet);
+//
+//      //Out Audio Param
+//      uint64_t out_channel_layout=av_get_default_channel_layout(pCodecCtx->channels);
+//      //nb_samples: AAC-1024 MP3-1152
+//      int out_nb_samples=pCodecCtx->frame_size;
+////          AVSampleFormat out_sample_fmt=AV_SAMPLE_FMT_S16;
+//      int out_sample_rate= 48000;
+//      int out_channels=av_get_channel_layout_nb_channels(out_channel_layout);
+//      //Out Buffer Size
+//      int out_buffer_size=av_samples_get_buffer_size(NULL,out_channels ,out_nb_samples, AV_SAMPLE_FMT_S16, 1);
+//
+//      LOGI("out_sample_rate  :%d，channels : %d, out_buffer_size :%d", out_sample_rate,out_channels,out_buffer_size);
+//
+//      out_buffer=(uint8_t *)av_malloc(MAX_AUDIO_FRAME_SIZE*2);
+//      pFrame=av_frame_alloc();
+//
+//      //FIX:Some Codec's Context Information is missing
+//      in_channel_layout=av_get_default_channel_layout(pCodecCtx->channels);
+//      //Swr
+//      au_convert_ctx = swr_alloc();
+//
+//      au_convert_ctx=swr_alloc_set_opts(NULL,out_channel_layout, AV_SAMPLE_FMT_S16, pCodecCtx->sample_rate,
+//          in_channel_layout,pCodecCtx->sample_fmt , pCodecCtx->sample_rate,0, NULL);
+//
+//        LOGI("out_channel_layout  :%"PRIu64"，in_channel_layout : %"PRIu64", sample_fmt :%d",
+//            out_channel_layout,in_channel_layout,pCodecCtx->sample_fmt);
+//
+//      swr_init(au_convert_ctx);
+//
+//      createEngine();
+//      int flag_start = 0;
+//      while(av_read_frame(pFormatCtx, packet)>=0){
+//          if(packet->stream_index==audioStream){
+//
+//              ret = avcodec_decode_audio4( pCodecCtx, pFrame, &got_picture, packet);
+//              if ( ret < 0 ) {
+//                  LOGI("Error in decoding audio frame.\n");
+//              }
+//              if ( got_picture > 0 ){
+//                  int outsamples = swr_convert(au_convert_ctx,&out_buffer, MAX_AUDIO_FRAME_SIZE,(const uint8_t **)pFrame->data , pFrame->nb_samples);
+//
+//                  LOGI("index:%5d\t pts:%lld\t packet size:%d\n",index,packet->pts,packet->size);
+//                  //Write PCM
+////                fwrite(out_buffer, 1, out_buffer_size, pFile);
+//                  index++;
+//                  if(flag_start == 0)
+//                    {
+//                        flag_start = 1;
+//                        createBufferQueueAudioPlayer(pCodecCtx->sample_rate, pCodecCtx->channels, SL_PCMSAMPLEFORMAT_FIXED_16);
+//                    }
+//                    LOGI("audioDecodec  out_buffer_size  :%d,channels : %d,nb_samples :%d,sample_rate    :%d", out_buffer_size,pCodecCtx->channels,
+//                    pFrame->nb_samples,pCodecCtx->sample_rate);
+//
+//                    int resampled_data_size = outsamples * pCodecCtx->channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+//
+//                    (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, out_buffer, resampled_data_size);
+//              }
+//          }
+//          usleep(11000);
+//          av_free_packet(packet);
+//      }
+//
+//      swr_free(&au_convert_ctx);
+//
+//      fclose(pFile);
+//
+//      av_free(out_buffer);
+//      // Close the codec
+//      avcodec_close(pCodecCtx);
+//      // Close the video file
+//      avformat_close_input(&pFormatCtx);
        LOGI("audioDecodec--decode finshed..........");
 
 //      (*threadEnv)->ReleaseStringUTFChars(threadEnv, fileName, local_title);
