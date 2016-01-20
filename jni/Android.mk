@@ -36,6 +36,11 @@ LOCAL_SRC_FILES := prebuilt/libswscale-2.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE :=  librtmp-prebuilt
+LOCAL_SRC_FILES := prebuilt/librtmp.so
+include $(PREBUILT_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
 
 LOCAL_MODULE := ffmpeg_codec
 LOCAL_SRC_FILES := cn_dennishucd_FFmpegNative.c cn_dennishucd_FFmpegAudioNative.c
@@ -44,6 +49,6 @@ LOCAL_LDLIBS := -llog -ljnigraphics -lz -landroid -lGLESv2
 LOCAL_LDLIBS    += -lOpenSLES
 
 LOCAL_SHARED_LIBRARIES := avcodec-55-prebuilt avdevice-55-prebuilt avfilter-4-prebuilt avformat-55-prebuilt \
-avutil-52-prebuilt swscale-2-prebuilt avswresample-0-prebuilt
+avutil-52-prebuilt swscale-2-prebuilt avswresample-0-prebuilt  librtmp-prebuilt
 
 include $(BUILD_SHARED_LIBRARY)

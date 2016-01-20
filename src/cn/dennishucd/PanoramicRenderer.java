@@ -249,7 +249,7 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
 
         if (yawSpeed != 0) {
             yawAngle += yawSpeed * delta;
-            yawSpeed *= 0.95;
+            yawSpeed *= 0.55;
         }
 //        if (scaleSpeed != 0) {
 //            setViewYZAngle(viewYZAngle + scaleSpeed * delta);
