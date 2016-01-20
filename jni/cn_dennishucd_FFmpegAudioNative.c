@@ -368,7 +368,7 @@ static void* decodeAudio(void *arg){
                                                                audioFrame->nb_samples,
                                                                AV_SAMPLE_FMT_S16, 0);
 
-              int outsamples = swr_convert(swr_ctx,&inbuf,needed_buf_size,(const uint8_t**)audioFrame->extended_data,audioFrame->nb_samples);
+              int outsamples = swr_convert(swr_ctx,&inbuf,needed_buf_size,(const uint8_t**)audioFrame->data, audioFrame->nb_samples);
 
               LOGI("b is %d,a is %d",needed_buf_size,audioFrame->nb_samples);
 
