@@ -1,10 +1,17 @@
 #include <jni.h>
 
-#include "cn_dennishucd_FFmpegNative.h"
+#include "cn_dennishucd_RTMPLibTest.h"
 
 #include <stdio.h>
 #include <librtmp/rtmp_sys.h>
 #include <librtmp/log.h>
+
+/*for android logs*/
+#include <android/log.h>
+
+#define LOG_TAG "android-ffmpeg-lihb-test"
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__);
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__);
 
 #ifdef __cplusplus
 extern "C" {
@@ -14,14 +21,17 @@ extern "C" {
  * Method:    NativeMain
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_cn_dennishucd_RTMPLibTest_NativeTest
-  (JNIEnv *env, jobject obj){
+JNIEXPORT jint JNICALL Java_cn_dennishucd_RTMPLibTest_naTest
+  (JNIEnv *env, jobject obj, jstring outputFile){
 		InitSockets();
+		LOGI("enter naTest method()");
 
+		char *outFileName = (char *)(*env)->GetStringUTFChars(env, outputFile, NULL);
+ 		LOGI("out fileName is %s", outFileName);
         double duration=-1;
         int nRead;
         //is live stream ?
-        bool bLiveStream=true;
+        int bLiveStream=1;
 
 
         int bufsize=1024*1024*10;
@@ -30,9 +40,10 @@ JNIEXPORT void JNICALL Java_cn_dennishucd_RTMPLibTest_NativeTest
         memset(buf,0,bufsize);
         long countbufsize=0;
 
-        FILE *fp=fopen("receive.flv","wb");
+        FILE *fp=fopen(outFileName,"wb");
         if (!fp){
             RTMP_LogPrintf("Open File Error.\n");
+            LOGI("Open File Error.\n");
             CleanupSockets();
             return -1;
         }
@@ -51,6 +62,7 @@ JNIEXPORT void JNICALL Java_cn_dennishucd_RTMPLibTest_NativeTest
             RTMP_Log(RTMP_LOGERROR,"SetupURL Err\n");
             RTMP_Free(rtmp);
             CleanupSockets();
+            LOGI("SetupURL Err\n");
             return -1;
         }
         if (bLiveStream){
@@ -64,6 +76,7 @@ JNIEXPORT void JNICALL Java_cn_dennishucd_RTMPLibTest_NativeTest
             RTMP_Log(RTMP_LOGERROR,"Connect Err\n");
             RTMP_Free(rtmp);
             CleanupSockets();
+            LOGI("Connect Err\n");
             return -1;
         }
 
@@ -72,6 +85,7 @@ JNIEXPORT void JNICALL Java_cn_dennishucd_RTMPLibTest_NativeTest
             RTMP_Close(rtmp);
             RTMP_Free(rtmp);
             CleanupSockets();
+            LOGI("ConnectStream Err\n");
             return -1;
         }
 
@@ -80,6 +94,7 @@ JNIEXPORT void JNICALL Java_cn_dennishucd_RTMPLibTest_NativeTest
 
             countbufsize+=nRead;
             RTMP_LogPrintf("Receive: %5dByte, Total: %5.2fkB\n",nRead,countbufsize*1.0/1024);
+            LOGI("Receive: %5dByte, Total: %5.2fkB\n",nRead,countbufsize*1.0/1024);
         }
 
         if(fp)

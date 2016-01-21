@@ -65,11 +65,20 @@ jint JNICALL Java_cn_dennishucd_FFmpegNative_naInit(JNIEnv *pEnv, jobject pObj, 
     // Register all formats and codecs
     av_register_all();
     // Open video file
-    if(avformat_open_input(&formatCtx, videoFileName, NULL, NULL)!=0)
+    if(avformat_open_input(&formatCtx, videoFileName, NULL, NULL)!=0){
+      LOGI("Couldn't open file");
       return -1; // Couldn't open file
+    }else{
+    	LOGI("open file success");
+    }
+
     // Retrieve stream information
-    if(avformat_find_stream_info(formatCtx, NULL)<0)
-      return -1; // Couldn't find stream information
+    if(avformat_find_stream_info(formatCtx, NULL)<0){
+       LOGI("Couldn't find stream information");
+       return -1; // Couldn't find stream information
+    }else{
+        LOGI("find stream information success");
+    }
     // Dump information about file onto standard error
     av_dump_format(formatCtx, 0, videoFileName, 0);
     // Find the first video stream
@@ -90,9 +99,16 @@ jint JNICALL Java_cn_dennishucd_FFmpegNative_naInit(JNIEnv *pEnv, jobject pObj, 
       fprintf(stderr, "Unsupported codec!\n");
       return -1; // Codec not found
     }
+     LOGI("AvCodec name is  %s", pCodec->name);
+     LOGI("AvCodec long name is  %s", pCodec->long_name);
     // Open codec
-    if(avcodec_open2(codecCtx, pCodec, &optionsDict)<0)
-      return -1; // Could not open codec
+    if(avcodec_open2(codecCtx, pCodec, &optionsDict)<0){
+		LOGI("----Could not open codec----");
+		return -1; // Could not open codec
+    }else{
+    	LOGI("---- open codec successful----");
+    }
+
     // Allocate video frame
     decodedFrame=av_frame_alloc();
     // Allocate an AVFrame structure

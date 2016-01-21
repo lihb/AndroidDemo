@@ -6,11 +6,11 @@ package cn.dennishucd;
 public class RTMPLibTest {
 
     static {
-        System.loadLibrary("rtmp");
+        System.loadLibrary("rtmp-0");
         System.loadLibrary("ffmpeg_codec");
     }
 
-    public native void NativeTest();
+    public native int naTest(String outFile);
 //    public native int InitSockets();
 //    public native void CleanupSockets();
 

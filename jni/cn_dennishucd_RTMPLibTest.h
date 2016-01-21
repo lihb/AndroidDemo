@@ -12,8 +12,8 @@ extern "C" {
  * Method:    NativeMain
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_cn_dennishucd_RTMPLibTest_NativeTest
-  (JNIEnv *, jobject);
+JNIEXPORT jint JNICALL Java_cn_dennishucd_RTMPLibTest_naTest
+  (JNIEnv *, jobject, jstring);
 
 void InitSockets();
 
