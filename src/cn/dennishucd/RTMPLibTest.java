@@ -6,7 +6,6 @@ package cn.dennishucd;
 public class RTMPLibTest {
 
     static {
-        System.loadLibrary("rtmp-0");
         System.loadLibrary("ffmpeg_codec");
     }
 

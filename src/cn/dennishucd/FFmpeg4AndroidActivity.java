@@ -2,12 +2,10 @@ package cn.dennishucd;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Intent;
 import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.widget.Button;
@@ -20,6 +18,9 @@ public class FFmpeg4AndroidActivity extends Activity {
 			+ "/1.pcm";
 	private static final String PATH_OUT_FLV = Environment.getExternalStorageDirectory().getPath()
 			+ "/ych.flv";
+
+	private static final String PUSH_PATH = Environment.getExternalStorageDirectory().getPath() + "/1.mp4";
+	private static final String PUSH_OUT = "rtmp://183.61.143.98:1935/flvplayback/testpush1";
 
 	private Button btnStart = null;
 
@@ -35,34 +36,36 @@ public class FFmpeg4AndroidActivity extends Activity {
 		final RTMPLibTest rtmpLibTest = new RTMPLibTest();
 		final FFmpegNative ffmpeg = new FFmpegNative(DataManager.getInstance().bitmapQueue);
 		final FFmpegAudioNative fFmpegAudioNative = new FFmpegAudioNative();
-//
-		ffmpeg.naInit(PATH);
-		int[] resArr = ffmpeg.naGetVideoRes();
-		Log.d(TAG, "res width " + resArr[0] + ": height " + resArr[1]);
-		int[] screenRes = getScreenRes();
-		int width, height;
-		float widthScaledRatio = screenRes[0]*1.0f / resArr[0];
-		float heightScaledRatio = screenRes[1]*1.0f / resArr[1];
-		if (widthScaledRatio > heightScaledRatio) {
-			//use heightScaledRatio
-			width = (int) (resArr[0]*heightScaledRatio);
-			height = screenRes[1];
-		} else {
-			//use widthScaledRatio
-			width = screenRes[0];
-			height = (int) (resArr[1]*widthScaledRatio);
-		}
-		Log.d(TAG, "width " + width + ",height:" + height);
-		ffmpeg.naSetup(1920, 960);
+		final RtmpPush rtmpPush = new RtmpPush();
+
+//		ffmpeg.naInit(PATH);
+//		int[] resArr = ffmpeg.naGetVideoRes();
+//		Log.d(TAG, "res width " + resArr[0] + ": height " + resArr[1]);
+//		int[] screenRes = getScreenRes();
+//		int width, height;
+//		float widthScaledRatio = screenRes[0]*1.0f / resArr[0];
+//		float heightScaledRatio = screenRes[1]*1.0f / resArr[1];
+//		if (widthScaledRatio > heightScaledRatio) {
+//			//use heightScaledRatio
+//			width = (int) (resArr[0]*heightScaledRatio);
+//			height = screenRes[1];
+//		} else {
+//			//use widthScaledRatio
+//			width = screenRes[0];
+//			height = (int) (resArr[1]*widthScaledRatio);
+//		}
+//		Log.d(TAG, "width " + width + ",height:" + height);
+//		ffmpeg.naSetup(1920, 960);
 
 
 		btnStart.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				fFmpegAudioNative.startAudioPlayer(PATH, PATH_OUT);
-				ffmpeg.naPlay();
-				Intent intent = new Intent(FFmpeg4AndroidActivity.this, PanoramicView.class);
-				startActivity(intent);
+//				fFmpegAudioNative.startAudioPlayer(PATH, PATH_OUT);
+//				ffmpeg.naPlay();
+//				Intent intent = new Intent(FFmpeg4AndroidActivity.this, PanoramicView.class);
+//				startActivity(intent);
+				rtmpPush.pushVideo(PUSH_PATH, PUSH_OUT);
 //				rtmpLibTest.naTest(PATH_OUT_FLV);
 			}
 		});

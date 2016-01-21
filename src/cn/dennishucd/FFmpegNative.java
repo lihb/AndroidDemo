@@ -60,7 +60,6 @@ public class FFmpegNative {
 		System.loadLibrary("swscale-4");
 		System.loadLibrary("avfilter-6");
 		System.loadLibrary("ffmpeg_codec");
-		System.loadLibrary("rtmp-0");
 	}
 
 
