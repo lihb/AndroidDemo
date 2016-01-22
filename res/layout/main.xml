@@ -1,14 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal">
-    <RelativeLayout android:id="@+id/relativeLayout1" android:layout_height="match_parent"
-                    android:layout_width="wrap_content" android:gravity="center">
-        <Button
-                android:layout_alignParentLeft="true"
-                android:id="@+id/button1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/hello"/>
 
-    </RelativeLayout>
-</LinearLayout>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/relativeLayout1"
+                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
+                >
+
+    <TextView
+            android:id="@+id/rtmpTxt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:textSize="18sp"
+            android:text="播放地址:"
+
+    />
+    <EditText
+            android:id="@+id/rtmpEditTxt"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/rtmpTxt"
+            android:layout_marginTop="10dp"
+            android:text="rtmp://183.61.143.98:1935/flvplayback/mp4:panvideo1.mp4"
+    />
+    <Button
+            android:id="@+id/button1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/rtmpEditTxt"
+            android:layout_marginTop="10dp"
+            android:text="@string/hello"/>
+
+</RelativeLayout>
