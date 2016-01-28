@@ -36,15 +36,14 @@ AVFormatContext   *formatCtx = NULL;
 int         videoStream;
 AVCodecContext    *codecCtx = NULL;
 AVFrame           *decodedFrame = NULL;
-AVFrame           *frameRGBA = NULL;
-jobject       bitmap;
+static AVFrame           *frameRGBA = NULL;
+static jobject       mBitmap;
 void*       buffer;
-struct SwsContext   *sws_ctx = NULL;
-int         width;
-int         height;
+static struct SwsContext   *sws_ctx = NULL;
 
-JavaVM      *gJavaVM;
-jobject     gJavaObj;
+static JavaVM      *gJavaVM;
+static jclass      gJavaClass;
+static jmethodID   gMethodID;
 
 /*
  * Class:     cn_dennishucd_FFmpegNative
@@ -58,7 +57,10 @@ jint JNICALL Java_cn_dennishucd_FFmpegNative_naInit(JNIEnv *pEnv, jobject pObj, 
 
     //全局化变量
     (*pEnv)->GetJavaVM(pEnv, &gJavaVM);
-    gJavaObj = (*pEnv)->NewGlobalRef(pEnv,pObj);
+    jclass clazz = (*pEnv)->GetObjectClass(pEnv,pObj);
+    gJavaClass = (jclass)(*pEnv)->NewGlobalRef(pEnv,clazz);
+
+    gMethodID = (*pEnv)->GetStaticMethodID(pEnv,gJavaClass,"offer","(Landroid/graphics/Bitmap;)Z");
 
     videoFileName = (char *)(*pEnv)->GetStringUTFChars(pEnv, pFileName, NULL);
     LOGI("video file name is %s", videoFileName);
@@ -146,20 +148,19 @@ jintArray JNICALL Java_cn_dennishucd_FFmpegNative_naGetVideoRes(JNIEnv *pEnv, jo
 * Method:    naSetup
 * Signature: (II)I
 */
-jint JNICALL Java_cn_dennishucd_FFmpegNative_naSetup(JNIEnv *pEnv, jobject pObj, jint pWidth, jint pHeight){
-    width = pWidth;
-    height = pHeight;
+jint JNICALL Java_cn_dennishucd_FFmpegNative_naSetup(JNIEnv *pEnv, jobject pObj){
     //create a bitmap as the buffer for frameRGBA
-    bitmap = createBitmap(pEnv, pWidth, pHeight);
-    if (AndroidBitmap_lockPixels(pEnv, bitmap, &buffer) < 0)
+    jobject bitmap = createBitmap(pEnv, codecCtx->width, codecCtx->height);
+    mBitmap = (jobject)(*pEnv)->NewGlobalRef(pEnv,bitmap);
+    if (AndroidBitmap_lockPixels(pEnv, mBitmap, &buffer) < 0)
       return -1;
     //get the scaling context
     sws_ctx = sws_getContext(
             codecCtx->width,
             codecCtx->height,
             codecCtx->pix_fmt,
-            pWidth,
-            pHeight,
+            codecCtx->width,
+            codecCtx->height,
             AV_PIX_FMT_RGBA,
             SWS_BILINEAR,
             NULL,
@@ -170,15 +171,15 @@ jint JNICALL Java_cn_dennishucd_FFmpegNative_naSetup(JNIEnv *pEnv, jobject pObj,
     // Note that pFrameRGBA is an AVFrame, but AVFrame is a superset
     // of AVPicture
     avpicture_fill((AVPicture *)frameRGBA, buffer, AV_PIX_FMT_RGBA,
-        pWidth, pHeight);
+         codecCtx->width,codecCtx->height);
     return 0;
   }
 
  void JNICALL Java_cn_dennishucd_FFmpegNative_naPlay(JNIEnv *pEnv,  jobject pObj){
     //create a new thread for video decode and render
-        pthread_t decodeThread;
+     pthread_t decodeThread;
 
-        pthread_create(&decodeThread, NULL, decodeVideo, NULL);
+     pthread_create(&decodeThread, NULL, decodeVideo, NULL);
 
 
  }
@@ -197,21 +198,21 @@ static void* decodeVideo(void *arg){
      // Is this a packet from the video stream?
      if(packet.stream_index==videoStream) {
          // Decode video frame
-         avcodec_decode_video2(codecCtx, decodedFrame, &frameFinished,
-         &packet);
+         avcodec_decode_video2(codecCtx, decodedFrame, &frameFinished, &packet);
          // Did we get a video frame?
          if(frameFinished) {
+          LOGI("in if frameFinished, decodedFrame->width = %d", decodedFrame->width);
             // Convert the image from its native format to RGBA
-			sws_scale
-			(
-			  sws_ctx,
-			  (uint8_t const * const *)decodedFrame->data,
-			  decodedFrame->linesize,
-			  0,
-			  codecCtx->height,
-			  frameRGBA->data,
-			  frameRGBA->linesize
-			);
+//			sws_scale
+//			(
+//			  sws_ctx,
+//			  (uint8_t const * const *)decodedFrame->data,
+//			  decodedFrame->linesize,
+//			  0,
+//			  codecCtx->height,
+//			  frameRGBA->data,
+//			  frameRGBA->linesize
+//			);
           LOGI("decodeVideo before saveFrame()");
 //          SaveFrame(pEnv, bitmap, codecCtx->width, codecCtx->height);
            LOGI("saveFrame --begin");
@@ -220,19 +221,19 @@ static void* decodeVideo(void *arg){
             //  char szFilename[200];
 //            jmethodID sSaveFrameMID;
             //获取Java层对应的类
-            	jclass javaClass = (*threadEnv)->GetObjectClass(threadEnv,gJavaObj);
-            	if( javaClass == NULL ) {
-            		LOGI("Fail to find javaClass");
-            		return 0;
-            	}
+//            	jclass javaClass = (*threadEnv)->GetObjectClass(threadEnv,gJavaObj);
+//            	if( javaClass == NULL ) {
+//            		LOGI("Fail to find javaClass");
+//            		return 0;
+//            	}
 
             	//获取Java层被回调的函数
-              jmethodID javaCallback = (*threadEnv)->GetMethodID(threadEnv,javaClass,"offer","(Landroid/graphics/Bitmap;)Z");
+//              jmethodID javaCallback = (*threadEnv)->GetMethodID(threadEnv,javaClass,"offer","(Landroid/graphics/Bitmap;)Z");
 //              jmethodID javaCallback = (*threadEnv)->GetMethodID(threadEnv,javaClass,"saveFrameToPath","(Landroid/graphics/Bitmap;Ljava/lang/String;)V");
-              if(javaCallback == NULL) {
-              	LOGI("Fail to find method onNativeCallback");
-              	return 0;
-              }
+//              if(javaCallback == NULL) {
+//              	LOGI("Fail to find method onNativeCallback");
+//              	return 0;
+//              }
 
               //回调Java层的函数
                LOGI("call java method to save frame");
@@ -242,22 +243,23 @@ static void* decodeVideo(void *arg){
 //               jstring filePath = (*threadEnv)->NewStringUTF(threadEnv, szFilename);
 
 //              (*threadEnv)->CallVoidMethod(threadEnv,gJavaObj,javaCallback, bitmap, filePath);
-              (*threadEnv)->CallBooleanMethod(threadEnv,gJavaObj,javaCallback,bitmap);
-               LOGI("call java method to save frame done");
+              (*threadEnv)->CallStaticBooleanMethod(threadEnv, gJavaClass, gMethodID, mBitmap);
+               LOGI("call java method to save frame done.");
 //               LOGI("save frame %d", i);
                // 释放资源
-               (*threadEnv)->DeleteLocalRef(threadEnv, javaCallback);
-               (*threadEnv)->DeleteLocalRef(threadEnv, javaClass);
+//               (*threadEnv)->DeleteLocalRef(threadEnv, javaCallback);
+//               (*threadEnv)->DeleteLocalRef(threadEnv, javaClass);
+//               (*threadEnv)->DeleteLocalRef(threadEnv, filePath);
       }
     }
     // Free the packet that was allocated by av_read_frame
-    av_free_packet(&packet);
+    av_packet_unref(&packet);
 
   }
 
 
   //unlock the bitmap
-  AndroidBitmap_unlockPixels(threadEnv, bitmap);
+  AndroidBitmap_unlockPixels(threadEnv, mBitmap);
 
   // Free the RGB image
   av_free(frameRGBA);
@@ -272,7 +274,7 @@ static void* decodeVideo(void *arg){
   avformat_close_input(&formatCtx);
 
 //  销毁全局对象
-  (*threadEnv)->DeleteGlobalRef(threadEnv, gJavaObj);
+  (*threadEnv)->DeleteGlobalRef(threadEnv, gJavaClass);
     //释放当前线程
     (*gJavaVM)->DetachCurrentThread(gJavaVM);
     pthread_exit(0);
@@ -285,10 +287,10 @@ static void* decodeVideo(void *arg){
 
 
 jobject createBitmap(JNIEnv *pEnv, jint pWidth, jint pHeight) {
-  int i;
+    int i;
   //get Bitmap class and createBitmap method ID
-  jclass javaBitmapClass = (jclass)(*pEnv)->FindClass(pEnv, "android/graphics/Bitmap");
-  jmethodID mid = (*pEnv)->GetStaticMethodID(pEnv, javaBitmapClass, "createBitmap", "(IILandroid/graphics/Bitmap$Config;)Landroid/graphics/Bitmap;");
+    jclass javaBitmapClass = (jclass)(*pEnv)->FindClass(pEnv, "android/graphics/Bitmap");
+    jmethodID mid = (*pEnv)->GetStaticMethodID(pEnv, javaBitmapClass, "createBitmap", "(IILandroid/graphics/Bitmap$Config;)Landroid/graphics/Bitmap;");
   //create Bitmap.Config
   //reference: https://forums.oracle.com/thread/1548728
   const wchar_t* configName = L"ARGB_8888";

@@ -70,11 +70,11 @@ public class FFmpeg4AndroidActivity extends Activity {
 					height = (int) (resArr[1]*widthScaledRatio);
 				}
 				Log.d(TAG, "width " + width + ",height:" + height);
-				ffmpeg.naSetup(1920, 960);
+				ffmpeg.naSetup();
 //				fFmpegAudioNative.startAudioPlayer(rtmpVideoPath, PATH_OUT);
 				ffmpeg.naPlay();
-//				Intent intent = new Intent(FFmpeg4AndroidActivity.this, PanoramicView.class);
-//				startActivity(intent);
+				Intent intent = new Intent(FFmpeg4AndroidActivity.this, PanoramicView.class);
+				startActivity(intent);
 
 			}
 		});

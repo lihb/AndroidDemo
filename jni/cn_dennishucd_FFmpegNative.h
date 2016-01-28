@@ -30,7 +30,7 @@ JNIEXPORT jintArray JNICALL Java_cn_dennishucd_FFmpegNative_naGetVideoRes
  * Signature: (II)I
  */
 JNIEXPORT jint JNICALL Java_cn_dennishucd_FFmpegNative_naSetup
-  (JNIEnv *, jobject, jint, jint);
+  (JNIEnv *, jobject);
 
 /*
  * Class:     cn_dennishucd_FFmpegNative

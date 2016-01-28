@@ -8,7 +8,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class FFmpegNative {
 
-	private LinkedBlockingQueue<Bitmap> bitmapQueue;
+	private static LinkedBlockingQueue<Bitmap> bitmapQueue;
 
 	public FFmpegNative(LinkedBlockingQueue<Bitmap> bitmapQueue) {
 		this.bitmapQueue = bitmapQueue;
@@ -16,7 +16,7 @@ public class FFmpegNative {
 
 	public native int naInit(String pFileName);
 	public native int[] naGetVideoRes();
-	public native int naSetup(int pWidth, int pHeight);
+	public native int naSetup();
 
 	public native void naPlay();
 
@@ -43,7 +43,7 @@ public class FFmpegNative {
 		}
 	}
 
-	public boolean offer(Bitmap bitmap) {
+	public static boolean offer(Bitmap bitmap) {
 		Log.i("lihb test----- offfer()", bitmapQueue.toString());
 		return bitmapQueue.offer(bitmap);
 //		DataManager.getInstance().arrayList.add(bitmap);

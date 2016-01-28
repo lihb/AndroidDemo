@@ -100,7 +100,7 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
         }
 
         try {
-            Thread.sleep(100);
+            Thread.sleep(180);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

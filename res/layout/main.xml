@@ -21,7 +21,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@+id/rtmpTxt"
             android:layout_marginTop="10dp"
-            android:text="rtmp://183.61.143.98:1935/flvplayback/mp4:panvideo1.mp4"
+            android:text="/storage/emulated/0/1.mp4"
     />
     <Button
             android:id="@+id/button1"
