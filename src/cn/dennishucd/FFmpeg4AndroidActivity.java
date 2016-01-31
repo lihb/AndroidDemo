@@ -30,6 +30,8 @@ public class FFmpeg4AndroidActivity extends Activity {
 
 	private EditText mRtmpEditTxt = null;
 
+    private ThreadInJava threadInJava = null;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -45,7 +47,7 @@ public class FFmpeg4AndroidActivity extends Activity {
 		final FFmpegAudioNative fFmpegAudioNative = new FFmpegAudioNative();
 //		final RtmpPush rtmpPush = new RtmpPush();
 
-
+        threadInJava = new ThreadInJava(DataManager.getInstance().bitmapQueue);
 
 
 		btnStart.setOnClickListener(new View.OnClickListener() {
@@ -54,25 +56,10 @@ public class FFmpeg4AndroidActivity extends Activity {
 				String rtmpVideoPath = mRtmpEditTxt.getText().toString().trim();
 				Log.i(TAG, "远程播放地址是:" + rtmpVideoPath);
 				ffmpeg.naInit(rtmpVideoPath);
-				int[] resArr = ffmpeg.naGetVideoRes();
-				Log.d(TAG, "res width " + resArr[0] + ": height " + resArr[1]);
-				int[] screenRes = getScreenRes();
-				int width, height;
-				float widthScaledRatio = screenRes[0]*1.0f / resArr[0];
-				float heightScaledRatio = screenRes[1]*1.0f / resArr[1];
-				if (widthScaledRatio > heightScaledRatio) {
-					//use heightScaledRatio
-					width = (int) (resArr[0]*heightScaledRatio);
-					height = screenRes[1];
-				} else {
-					//use widthScaledRatio
-					width = screenRes[0];
-					height = (int) (resArr[1]*widthScaledRatio);
-				}
-				Log.d(TAG, "width " + width + ",height:" + height);
 				ffmpeg.naSetup();
-//				fFmpegAudioNative.startAudioPlayer(rtmpVideoPath, PATH_OUT);
+				fFmpegAudioNative.startAudioPlayer(rtmpVideoPath, PATH_OUT);
 				ffmpeg.naPlay();
+//                threadInJava.startPlay(rtmpVideoPath);
 				Intent intent = new Intent(FFmpeg4AndroidActivity.this, PanoramicView.class);
 				startActivity(intent);
 

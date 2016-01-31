@@ -110,6 +110,7 @@ jint JNICALL Java_cn_dennishucd_FFmpegNative_naInit(JNIEnv *pEnv, jobject pObj, 
     }else{
     	LOGI("---- open codec successful----");
     }
+    LOGI("naInit() current thread id = %lu", pthread_self());
 
     // Allocate video frame
     decodedFrame=av_frame_alloc();
@@ -139,6 +140,7 @@ jintArray JNICALL Java_cn_dennishucd_FFmpegNative_naGetVideoRes(JNIEnv *pEnv, jo
     lVideoRes[0] = codecCtx->width;
     lVideoRes[1] = codecCtx->height;
     (*pEnv)->SetIntArrayRegion(pEnv, lRes, 0, 2, lVideoRes);
+     LOGI("naGetVideoRes() current thread id = %lu", pthread_self());
     return lRes;
 
 }
@@ -167,6 +169,7 @@ jint JNICALL Java_cn_dennishucd_FFmpegNative_naSetup(JNIEnv *pEnv, jobject pObj)
             NULL,
             NULL
     );
+     LOGI("naSetup() current thread id = %lu", pthread_self());
     // Assign appropriate parts of bitmap to image planes in pFrameRGBA
     // Note that pFrameRGBA is an AVFrame, but AVFrame is a superset
     // of AVPicture
@@ -178,7 +181,7 @@ jint JNICALL Java_cn_dennishucd_FFmpegNative_naSetup(JNIEnv *pEnv, jobject pObj)
  void JNICALL Java_cn_dennishucd_FFmpegNative_naPlay(JNIEnv *pEnv,  jobject pObj){
     //create a new thread for video decode and render
      pthread_t decodeThread;
-
+     LOGI("naPlay() current thread id = %lu", pthread_self());
      pthread_create(&decodeThread, NULL, decodeVideo, NULL);
 
 
@@ -194,7 +197,6 @@ static void* decodeVideo(void *arg){
 
   // Read frames and save first five frames to disk
   while(av_read_frame(formatCtx, &packet)>=0) {
-//  	 	 usleep(200000); // 300000microsecond = 300millisecond
      // Is this a packet from the video stream?
      if(packet.stream_index==videoStream) {
          // Decode video frame
@@ -202,20 +204,21 @@ static void* decodeVideo(void *arg){
          // Did we get a video frame?
          if(frameFinished) {
           LOGI("in if frameFinished, decodedFrame->width = %d", decodedFrame->width);
+          LOGI("decodeVideo() current thread id = %lu", pthread_self());
             // Convert the image from its native format to RGBA
-//			sws_scale
-//			(
-//			  sws_ctx,
-//			  (uint8_t const * const *)decodedFrame->data,
-//			  decodedFrame->linesize,
-//			  0,
-//			  codecCtx->height,
-//			  frameRGBA->data,
-//			  frameRGBA->linesize
-//			);
+          sws_scale
+          (
+              sws_ctx,
+              (uint8_t const * const *)decodedFrame->data,
+              decodedFrame->linesize,
+              0,
+              codecCtx->height,
+              frameRGBA->data,
+              frameRGBA->linesize
+          );
           LOGI("decodeVideo before saveFrame()");
 //          SaveFrame(pEnv, bitmap, codecCtx->width, codecCtx->height);
-           LOGI("saveFrame --begin");
+          LOGI("saveFrame --begin");
 
 
             //  char szFilename[200];
@@ -250,31 +253,31 @@ static void* decodeVideo(void *arg){
 //               (*threadEnv)->DeleteLocalRef(threadEnv, javaCallback);
 //               (*threadEnv)->DeleteLocalRef(threadEnv, javaClass);
 //               (*threadEnv)->DeleteLocalRef(threadEnv, filePath);
-      }
+        }
     }
     // Free the packet that was allocated by av_read_frame
-    av_packet_unref(&packet);
+    av_free_packet(&packet);
 
   }
 
 
-  //unlock the bitmap
-  AndroidBitmap_unlockPixels(threadEnv, mBitmap);
+    //unlock the bitmap
+    AndroidBitmap_unlockPixels(threadEnv, mBitmap);
 
-  // Free the RGB image
-  av_free(frameRGBA);
+    // Free the RGB image
+    av_free(frameRGBA);
 
-  // Free the YUV frame
-  av_free(decodedFrame);
+    // Free the YUV frame
+    av_free(decodedFrame);
 
-  // Close the codec
-  avcodec_close(codecCtx);
+    // Close the codec
+    avcodec_close(codecCtx);
 
-  // Close the video file
-  avformat_close_input(&formatCtx);
+    // Close the video file
+    avformat_close_input(&formatCtx);
 
-//  销毁全局对象
-  (*threadEnv)->DeleteGlobalRef(threadEnv, gJavaClass);
+    //  销毁全局对象
+    (*threadEnv)->DeleteGlobalRef(threadEnv, gJavaClass);
     //释放当前线程
     (*gJavaVM)->DetachCurrentThread(gJavaVM);
     pthread_exit(0);
