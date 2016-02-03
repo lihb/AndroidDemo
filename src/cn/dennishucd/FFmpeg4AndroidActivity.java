@@ -57,7 +57,7 @@ public class FFmpeg4AndroidActivity extends Activity {
 				Log.i(TAG, "远程播放地址是:" + rtmpVideoPath);
 				ffmpeg.naInit(rtmpVideoPath);
 				ffmpeg.naSetup();
-				fFmpegAudioNative.startAudioPlayer(rtmpVideoPath, PATH_OUT);
+//				fFmpegAudioNative.startAudioPlayer(rtmpVideoPath, PATH_OUT);
 				ffmpeg.naPlay();
 //                threadInJava.startPlay(rtmpVideoPath);
 				Intent intent = new Intent(FFmpeg4AndroidActivity.this, PanoramicView.class);

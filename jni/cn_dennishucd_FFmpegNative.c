@@ -37,11 +37,11 @@ int         videoStream;
 AVCodecContext    *codecCtx = NULL;
 AVFrame           *decodedFrame = NULL;
 static AVFrame           *frameRGBA = NULL;
-static jobject       mBitmap;
 void*       buffer;
 static struct SwsContext   *sws_ctx = NULL;
 
 static JavaVM      *gJavaVM;
+static jobject     mBitmap;
 static jclass      gJavaClass;
 static jmethodID   gMethodID;
 
@@ -216,51 +216,16 @@ static void* decodeVideo(void *arg){
               frameRGBA->data,
               frameRGBA->linesize
           );
-          LOGI("decodeVideo before saveFrame()");
-//          SaveFrame(pEnv, bitmap, codecCtx->width, codecCtx->height);
-          LOGI("saveFrame --begin");
-
-
-            //  char szFilename[200];
-//            jmethodID sSaveFrameMID;
-            //获取Java层对应的类
-//            	jclass javaClass = (*threadEnv)->GetObjectClass(threadEnv,gJavaObj);
-//            	if( javaClass == NULL ) {
-//            		LOGI("Fail to find javaClass");
-//            		return 0;
-//            	}
-
-            	//获取Java层被回调的函数
-//              jmethodID javaCallback = (*threadEnv)->GetMethodID(threadEnv,javaClass,"offer","(Landroid/graphics/Bitmap;)Z");
-//              jmethodID javaCallback = (*threadEnv)->GetMethodID(threadEnv,javaClass,"saveFrameToPath","(Landroid/graphics/Bitmap;Ljava/lang/String;)V");
-//              if(javaCallback == NULL) {
-//              	LOGI("Fail to find method onNativeCallback");
-//              	return 0;
-//              }
-
-              //回调Java层的函数
-               LOGI("call java method to save frame");
-//               char szFilename[200];
-
-//               sprintf(szFilename, "/sdcard/aaaaa/frame%d.jpg", i);
-//               jstring filePath = (*threadEnv)->NewStringUTF(threadEnv, szFilename);
-
-//              (*threadEnv)->CallVoidMethod(threadEnv,gJavaObj,javaCallback, bitmap, filePath);
-              (*threadEnv)->CallStaticBooleanMethod(threadEnv, gJavaClass, gMethodID, mBitmap);
-               LOGI("call java method to save frame done.");
-//               LOGI("save frame %d", i);
-               // 释放资源
-//               (*threadEnv)->DeleteLocalRef(threadEnv, javaCallback);
-//               (*threadEnv)->DeleteLocalRef(threadEnv, javaClass);
-//               (*threadEnv)->DeleteLocalRef(threadEnv, filePath);
+          //回调Java层的函数
+          LOGI("call java method to offer bitmap");
+          (*threadEnv)->CallStaticBooleanMethod(threadEnv, gJavaClass, gMethodID, mBitmap);
+          LOGI("call java method to offer bitmap done.");
         }
     }
     // Free the packet that was allocated by av_read_frame
     av_free_packet(&packet);
 
   }
-
-
     //unlock the bitmap
     AndroidBitmap_unlockPixels(threadEnv, mBitmap);
 
@@ -276,8 +241,9 @@ static void* decodeVideo(void *arg){
     // Close the video file
     avformat_close_input(&formatCtx);
 
-    //  销毁全局对象
+    // 销毁全局对象
     (*threadEnv)->DeleteGlobalRef(threadEnv, gJavaClass);
+    (*threadEnv)->DeleteGlobalRef(threadEnv, mBitmap);
     //释放当前线程
     (*gJavaVM)->DetachCurrentThread(gJavaVM);
     pthread_exit(0);
@@ -290,7 +256,7 @@ static void* decodeVideo(void *arg){
 
 
 jobject createBitmap(JNIEnv *pEnv, jint pWidth, jint pHeight) {
-    int i;
+  int i;
   //get Bitmap class and createBitmap method ID
     jclass javaBitmapClass = (jclass)(*pEnv)->FindClass(pEnv, "android/graphics/Bitmap");
     jmethodID mid = (*pEnv)->GetStaticMethodID(pEnv, javaBitmapClass, "createBitmap", "(IILandroid/graphics/Bitmap$Config;)Landroid/graphics/Bitmap;");

@@ -84,26 +84,26 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 gl) {
         Log.i("lihb test", "onDrawFrame called");
 
-        gl.glDeleteTextures(1, new int[]{mTextureID}, 0);
-
-        int[] textures = new int[1];
-        gl.glGenTextures(1, textures, 0);
-        mTextureID = textures[0];
-
         Bitmap bitmap = bitmapQueue.poll();
         if (bitmap != null) {
+            gl.glDeleteTextures(1, new int[]{mTextureID}, 0);
+
+            int[] textures = new int[1];
+            gl.glGenTextures(1, textures, 0);
+            mTextureID = textures[0];
             Log.i("lihb test----", "poll()-->" + bitmap.toString());
             // 设置纹理贴图
             setTexture(bitmap);
         }else {
             Log.i("lihb test----", "poll()--> bitmap = null");
+            return;
         }
 
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            Thread.sleep(100);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
 
         if (mGrid == null) return;
 
