@@ -1,15 +1,15 @@
 package cn.dennishucd;
 
 import android.graphics.Bitmap;
-import android.opengl.GLES10;
-import android.opengl.GLSurfaceView;
-import android.opengl.GLU;
-import android.opengl.GLUtils;
+import android.opengl.*;
 import android.os.SystemClock;
+import android.provider.Browser;
 import android.util.Log;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
+import java.nio.ByteBuffer;
+import java.util.Formatter;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -99,11 +99,11 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
             return;
         }
 
-//        try {
-//            Thread.sleep(100);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            Thread.sleep(40);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         if (mGrid == null) return;
 
@@ -137,7 +137,7 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
 
     public void setTexture(Bitmap bitmap) {
         if (bitmap == null) return;
-        Log.i("lihb test----", "in setTecture()");
+        Log.i("lihb test----", "in setTexture()");
         _gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureID);
 
         _gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER,
@@ -159,8 +159,14 @@ public class PanoramicRenderer implements GLSurfaceView.Renderer {
 
 
         GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
+//        int bytes = bitmap.getByteCount();
+//        ByteBuffer byteBuffer = ByteBuffer.allocate(bytes);
+//        bitmap.copyPixelsToBuffer(byteBuffer);
+//        Log.i("lihb test----", "bytes = " + bytes);
+//        _gl.glTexImage2D(GL10.GL_TEXTURE_2D, /*level*/ 0, GL10.GL_RGBA,
+//                512, 512, /*border*/ 0, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, byteBuffer);
         checkGlError("texImage2D");
-        Log.i("lihb test----", "in setTecture() after texImage2D ");
+        Log.i("lihb test----", "in setTexture() after texImage2D ");
 
 //        mGrid = null;
         mGrid = generateSphereGrid();
